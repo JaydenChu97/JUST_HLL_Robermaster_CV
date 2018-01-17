@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--> 程序运行静态参数设定 </!-->
+<opencv_storage>
+    <!--灯柱筛选条件-->
+    <armour_detector>
+        <angleRange> 20 </angleRange>
+        <minArea> 15 </minArea>
+        <maxHeightWidthRat> 15 </maxHeightWidthRat>
+        <minHeightWidthRat> 1 </minHeightWidthRat>
+        <maxWidthRat> 8 </maxWidthRat>
+        <maxHeightRat> 4 </maxHeightRat>
+        <maxAngleDiff> 15 </maxAngleDiff>
+        <maxHeightGapRat> 6 </maxHeightGapRat>
+        <minHeightGapRat> 2 </minHeightGapRat>
+    </armour_detector>
+
+    <!--图像hsv三通道阈值参数-->
+    <image_preprocessor_threshod>
+        160 180 125 255 220 255
+    </image_preprocessor_threshod>
+</opencv_storage>

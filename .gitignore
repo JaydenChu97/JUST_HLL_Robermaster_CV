@@ -73,3 +73,17 @@ $RECYCLE.BIN/
 
 # Windows shortcuts
 *.lnk
+
+# user configure
+/help/html
+/help/latex
+/other/
+
+/debug/
+/release/
+
+/.qmake.stash
+/JUST_HLL_Robermaster_CV.pro.user
+/Makefile
+/Makefile.Debug
+/Makefile.Release
