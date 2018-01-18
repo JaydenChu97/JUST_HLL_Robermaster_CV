@@ -36,30 +36,160 @@ Mat ImagePreprocessor::preprocess(const Mat& srcImage)
 
     //获取自定义核，核边长只能为奇数
     //Mat erodeKernel = getStructuringElement(MORPH_RECT, Size(3, 3));
-    Mat dilateKernel = getStructuringElement(MORPH_RECT, Size(15, 15));
-    Mat closeKernel = getStructuringElement(MORPH_RECT, Size(3, 3));
-    //腐蚀，消除离散点
-    //erode(hsvImages[1], hsvImages[1], erodeKernel);
-    //膨胀，增大光柱区域
-    dilate(hsvImages[0], hsvImages[0], dilateKernel);
-    //中值滤波，去除椒盐噪声
-    //medianBlur(hsvImages[2], hsvImages[2], 5);
-//    //显示装甲板轮廓
-//    Laplacian(hsvImages[1], hsvImages[1], CV_8UC1, 3, 1);
-    //逻辑与操作，过滤出小车灯柱
-    bitwise_and(hsvImages[0], hsvImages[2], dstImage);
-    //闭运算，将断裂的灯柱图像连接起来
-    morphologyEx(dstImage, dstImage, MORPH_CLOSE, closeKernel);
+    Mat kernel_1 = getStructuringElement(MORPH_RECT, Size(2,2));    
+    Mat kernel_2 = getStructuringElement(MORPH_RECT, Size(8,8));
+
+    //开运算去除小的噪声点，闭运算连接断开部分
+    Mat Hue,Saturation,Value;
+    hsvImages[2].convertTo(Value,CV_8UC1);
+    morphologyEx(hsvImages[0],Hue,MORPH_OPEN,kernel_1);
+    morphologyEx(Hue,Hue,MORPH_CLOSE,kernel_2);
+    morphologyEx(hsvImages[1],Saturation,MORPH_OPEN,kernel_1);
+    morphologyEx(Saturation,Saturation,MORPH_CLOSE,kernel_2);
+    Mat framethreshold = Mat(Value.size(), Value.type());
+    initThreshold(framethreshold);
+    threshProcess(framethreshold,Hue,Saturation,Value);
+
+    //开运算去除二值化图部分噪声点
+    Mat kernel = getStructuringElement(MORPH_RECT, Size(2,2));
+    morphologyEx(framethreshold, framethreshold, MORPH_OPEN, kernel);
+
+    wipePoints(framethreshold,Hue,Saturation);
 
     //显示单通道处理后图像
-    imshow("hImage", hsvImages[0]);
-    imshow("SImage", hsvImages[1]);
-    imshow("VImage", hsvImages[2]);
+    imshow("saturation",hsvImages[1]);
+    imshow("hImage", Hue);
+    imshow("SImage", Saturation);
+    imshow("VImage", Value);
 
     //显示预处理后图像
-    imshow("result", dstImage);
+    imshow("result", framethreshold);
 
-    return dstImage;
+    return framethreshold;
+}
+
+void ImagePreprocessor::initThreshold(Mat &framethreshold)
+{
+    //创建一个储存二值图的黑色背景
+    for (int i = 0;i < framethreshold.rows;i++)
+    {
+        uchar*framethresholdData = framethreshold.ptr<uchar>(i);
+        for (int j = 0;j < framethreshold.cols;j++)
+            framethresholdData[j] = 0;
+    }
+}
+
+void ImagePreprocessor::threshProcess(Mat &framethreshold,Mat &Hue,Mat &Staturation,Mat &Value)
+{
+    vector<vector<Point> > contours;//定义一个返回轮廓的容器
+    findContours(Value, contours, CV_RETR_EXTERNAL, CV_CHAIN_APPROX_NONE);//查找轮廓，只检索最外面的轮廓，将所有的连码点转换成点
+    vector<Rect> boundRect(contours.size());//画矩形
+    Point*center;//声明点
+    center = new Point[contours.size()];//创建点的数组
+    Rect box;    
+
+    //框定待检测区域
+    for(int a=0;a<contours.size();a++)
+    {
+        boundRect[a] = boundingRect(contours[a]);
+        for (int b = 0;b<contours.size();b++)
+        {
+            double redpixel[1] = { 0 };
+            double dark[1] = { 0 };
+            boundRect[b] = boundingRect(contours[b]);
+            double a1 = boundRect[a].x, a2 = boundRect[a].x + boundRect[a].width, a3 = boundRect[a].x, a4 = boundRect[a].x + boundRect[a].width;
+            double b1 = boundRect[b].y, b2 = boundRect[b].y + boundRect[b].height, b3 = boundRect[b].y, b4 = boundRect[b].y + boundRect[b].height;
+            double left = min(min(min(a1, a2), a3), a4);//左边界
+            double right = max(max(max(a1, a2), a3), a4);//右边界
+            double top = min(min(min(b1, b2), b3), b4);//上边界
+            double bottom = max(max(max(b1, b2), b3), b4);//下边界
+            box = Rect(left, top, right - left, bottom - top);//确定矩形大小
+
+            center[a].x = boundRect[a].x + boundRect[a].width / 2;
+            center[a].y = boundRect[a].y + boundRect[a].height / 2;
+            center[b].x = boundRect[b].x + boundRect[b].width / 2;
+            center[b].y = boundRect[b].y + boundRect[b].height / 2;
+
+            //颜色检测与饱和度检测
+            if (abs(center[b].y - center[a].y) < abs(center[b].x - center[a].x)*0.5)//夹角
+            {
+                for(int i=top;i<bottom;i++)
+                {
+                    uchar*tmph1data=Hue.ptr<uchar>(i);
+                    uchar*tmph2data=Staturation.ptr<uchar>(i);
+                    for(int j=left;j<right;j++)
+                    {
+                        if(tmph1data[j]==255)
+                            redpixel[0]++;
+                        if(tmph2data[j]==255)
+                            dark[0]++;
+                    }
+                }
+                //进行二值图的绘制
+                if(redpixel[0]>0&&dark[0]>0)
+                {
+                    if(boundRect[a].height>boundRect[a].width&&boundRect[b].height>boundRect[b].width)
+                    {
+
+                            for (int i = boundRect[a].y;i < boundRect[a].y + boundRect[a].height;i++)
+                            {
+                                uchar*tmph3data = Value.ptr<uchar>(i);
+                                uchar*framethresholdData = framethreshold.ptr<uchar>(i);
+                                for (int j = boundRect[a].x;j < boundRect[a].x + boundRect[a].width;j++)
+                                {
+                                    if (tmph3data[j] = 255)
+                                        framethresholdData[j] = 255;
+                                }
+                            }
+
+                            for (int i = boundRect[b].y;i < boundRect[b].y + boundRect[b].height;i++)
+                            {
+                                uchar*tmph3data = Value.ptr<uchar>(i);
+                                uchar*framethresholdData = framethreshold.ptr<uchar>(i);
+                                for (int j = boundRect[b].x;j < boundRect[b].x + boundRect[b].width;j++)
+                                {
+                                    if (tmph3data[j] = 255)
+                                        framethresholdData[j] = 255;
+                                }
+                            }
+                    }
+                }
+            }
+        }
+    }    
+}
+
+void ImagePreprocessor::wipePoints(Mat &framethreshold,Mat &hue,Mat &saturation)
+{
+    vector<vector<Point>>contours;
+    findContours(framethreshold,contours,CV_RETR_EXTERNAL,CV_CHAIN_APPROX_NONE);
+    vector<Rect> boundRect(contours.size());
+    for(int a=0;a<contours.size();a++)
+    {
+        double H_out[1]={0};
+        double S_out[1]={0};
+        boundRect[a] = boundingRect(contours[a]);
+        for(int b=0;b<contours[a].size();b++)
+        {
+            Point outPoint;
+            outPoint=Point(contours[a][b].x,contours[a][b].y);
+            if(hue.at<uchar>(outPoint)==255)
+            {
+                H_out[0]++;
+                if(saturation.at<uchar>(outPoint)==255)
+                    S_out[0]++;
+            }
+        }
+        if(H_out[0]==0&&S_out[0]==0)
+        {
+            for (int i = boundRect[a].y;i < boundRect[a].y + boundRect[a].height;i++)
+            {
+                uchar*framethresholdData = framethreshold.ptr<uchar>(i);
+                for (int j = boundRect[a].x;j < boundRect[a].x + boundRect[a].width;j++)
+                    framethresholdData[j] = 0;
+            }
+        }
+    }
 }
 
 void ImagePreprocessor::setThreshod(int channel, int minOrMax, int value)
@@ -75,8 +205,8 @@ int ImagePreprocessor::getThreshod(int channel, int minOrMax) const
 Mat ImagePreprocessor::rangeThreshold(const Mat& srcImage, const int& channel)
 {
     Mat result;
-    threshold(srcImage, result, static_cast<double>(thresholds[channel][0]), 0, THRESH_TOZERO);
-    threshold(result, result, static_cast<double>(thresholds[channel][1]), 0, THRESH_TOZERO_INV);
+    threshold(srcImage, result, static_cast<double>(thresholds[channel][0]), 255, THRESH_BINARY);
+    //threshold(srcImage, result, static_cast<double>(thresholds[channel][1]), 0, THRESH_BINARY);
 
     return result;
 }

@@ -70,12 +70,35 @@ public:
     Mat preprocess(const Mat& srcImage);
 
     /**
+     * @brief 初始化二值化图
+     * @param[in] 建立的背景
+     */
+    void initThreshold(Mat &framethreshold);
+
+    /**
+     * @brief 进行灯条的筛选
+     * @param[in] framethreshold 储存二值化图像
+     * @param[in] Hue hue通道
+     * @param[in] Statulation saturation通道
+     * @param[in] Value value通道
+     */
+    void threshProcess(Mat &framethreshold,Mat &Hue,Mat &Staturation,Mat &Value);
+
+    /**
+     * @brief 对二值化图进行去噪处理
+     * @param[in] framethreshold 二值化图
+     * @param[in] hue H通道
+     * @param[in] saturation S通道
+     */
+    void wipePoints(Mat &framethreshold,Mat &hue,Mat &saturation);
+
+    /**
     * @brief 设置预处理图像阈值
     * @param[in] channel 目标通道
     * @param[in] minOrMax 设置最大值还是最小值
     * @param[in] value 设定阈值
     * @return null
-    */
+    */       
     void setThreshod(int channel, int minOrMax, int value);
 
     /**

@@ -28,7 +28,7 @@ void MainControl::run(const string &path)
     namedWindow(srcFilePath, WINDOW_FULLSCREEN);
 
     //添加滑动控制条
-    Tool::addTrackBar(srcFilePath, srcFile);
+    //Tool::addTrackBar(srcFilePath, srcFile);
 
     //视频图像缓存区域
     Mat frame;
@@ -49,17 +49,17 @@ void MainControl::run(const string &path)
             break;
         }
 
-        Mat resizeFrame(Size(1280, 720), CV_8UC1);
+        Mat resizeFrame(Size(1080, 560), CV_8UC1);
 
         //重调至合适的大小，减小运算量
-        resize(frame, resizeFrame, Size(1280, 720));
+        resize(frame, resizeFrame, Size(1080, 560));
 
         //检测图片中的灯柱位置
         if(status == DETECTING && armourDetector.detect(resizeFrame))
         {
             Rect2d armourBlock = armourDetector.getBestArmourBlock();
             armourTracker.init(resizeFrame, armourBlock);
-            status = TRACKING;
+            //status = TRACKING;
         }
 
         // 追踪装甲板区域
