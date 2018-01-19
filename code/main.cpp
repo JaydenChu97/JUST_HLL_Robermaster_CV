@@ -20,7 +20,7 @@ int main(int argc, char *argv[])
 
     try
     {
-        instance.run("F:\\OpencvSources\\testVideo\\redcar3.MOV");
+        instance.run("F:\\视觉素材\\视觉素材\\炮台素材红车旋转-ev-0.MOV");
     }
     catch(const string& hint)
     {

@@ -22,11 +22,12 @@ DEFINES += QT_DEPRECATED_WARNINGS
 # You can also select to disable deprecated APIs only up to a certain version of Qt.
 #DEFINES += QT_DISABLE_DEPRECATED_BEFORE=0x060000    # disables all the APIs deprecated before Qt 6.0.0
 
-INCLUDEPATH += F:/opencv/build/opencv3.3.1_contrib_mingw32/include \
-               F:/opencv/build/opencv3.3.1_contrib_mingw32/include/opencv \
-               F:/opencv/build/opencv3.3.1_contrib_mingw32/include/opencv2
+INCLUDEPATH += F:/opencv3.3.1_contrib_mingw32/include\
+               F:/opencv3.3.1_contrib_mingw32/include/opencv\
+               F:/opencv3.3.1_contrib_mingw32/include/opencv2
 
-LIBS += F:/opencv/build/opencv3.3.1_contrib_mingw32/lib/libopencv_*.dll.a
+
+LIBS += F:/opencv3.3.1_contrib_mingw32/lib/libopencv_*.dll.a
 
 FORMS += \
     code/mainwindow.ui

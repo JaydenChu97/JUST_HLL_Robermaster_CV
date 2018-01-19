@@ -5,7 +5,7 @@
     <!--灯柱筛选条件-->
     <armour_detector>
         <angleRange> 20 </angleRange>
-        <minArea> 15 </minArea>
+        <minArea> 0 </minArea>
         <maxHeightWidthRat> 15 </maxHeightWidthRat>
         <minHeightWidthRat> 1 </minHeightWidthRat>
         <maxWidthRat> 8 </maxWidthRat>
@@ -17,6 +17,6 @@
 
     <!--图像hsv三通道阈值参数-->
     <image_preprocessor_threshod>
-        160 180 125 255 220 255
+        160 180 180 255 210 255
     </image_preprocessor_threshod>
 </opencv_storage>
