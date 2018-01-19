@@ -17,6 +17,6 @@
 
     <!--图像hsv三通道阈值参数-->
     <image_preprocessor_threshod>
-        160 180 180 255 210 255
+        160 180 215 255 220 255
     </image_preprocessor_threshod>
 </opencv_storage>

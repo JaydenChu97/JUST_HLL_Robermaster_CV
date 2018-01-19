@@ -13,7 +13,7 @@ ImagePreprocessor::ImagePreprocessor()
     
     for(unsigned int i = 0; i < 3; i++)
     {
-        cout << int(node[2*i]) << endl;
+        //cout << int(node[2*i]) << endl;
         thresholds[i].push_back(int(node[2*i]));
         thresholds[i].push_back(int(node[2*i+1]));
     }
@@ -36,28 +36,33 @@ Mat ImagePreprocessor::preprocess(const Mat& srcImage)
 
     //获取自定义核，核边长只能为奇数
     //Mat erodeKernel = getStructuringElement(MORPH_RECT, Size(3, 3));
-    Mat kernel_1 = getStructuringElement(MORPH_RECT, Size(2,2));    
+    Mat kernel_1 = getStructuringElement(MORPH_RECT, Size(2,2));
     Mat kernel_2 = getStructuringElement(MORPH_RECT, Size(8,8));
 
-    //开运算去除小的噪声点，闭运算连接断开部分
+    //开运算去除小的噪声点，闭运算连接断开部分，对H与S通道进行处理，方便去除背景干扰
     Mat Hue,Saturation,Value;
     hsvImages[2].convertTo(Value,CV_8UC1);
     morphologyEx(hsvImages[0],Hue,MORPH_OPEN,kernel_1);
     morphologyEx(Hue,Hue,MORPH_CLOSE,kernel_2);
     morphologyEx(hsvImages[1],Saturation,MORPH_OPEN,kernel_1);
     morphologyEx(Saturation,Saturation,MORPH_CLOSE,kernel_2);
-    Mat framethreshold = Mat(Value.size(), Value.type());
-    initThreshold(framethreshold);
+
+    //初始化二值化图
+    Mat framethreshold = Mat(Value.size(), CV_8UC1,Scalar(0));
+
+    //根据三个通道初步绘制二值化图
     threshProcess(framethreshold,Hue,Saturation,Value);
 
     //开运算去除二值化图部分噪声点
     Mat kernel = getStructuringElement(MORPH_RECT, Size(2,2));
     morphologyEx(framethreshold, framethreshold, MORPH_OPEN, kernel);
 
+    //根据团块外接轮廓的H与S通道去噪
     wipePoints(framethreshold,Hue,Saturation);
+    //中值滤波
+    medianBlur(framethreshold,framethreshold,3);
 
     //显示单通道处理后图像
-    imshow("saturation",hsvImages[1]);
     imshow("hImage", Hue);
     imshow("SImage", Saturation);
     imshow("VImage", Value);
@@ -66,17 +71,6 @@ Mat ImagePreprocessor::preprocess(const Mat& srcImage)
     imshow("result", framethreshold);
 
     return framethreshold;
-}
-
-void ImagePreprocessor::initThreshold(Mat &framethreshold)
-{
-    //创建一个储存二值图的黑色背景
-    for (int i = 0;i < framethreshold.rows;i++)
-    {
-        uchar*framethresholdData = framethreshold.ptr<uchar>(i);
-        for (int j = 0;j < framethreshold.cols;j++)
-            framethresholdData[j] = 0;
-    }
 }
 
 void ImagePreprocessor::threshProcess(Mat &framethreshold,Mat &Hue,Mat &Staturation,Mat &Value)
@@ -92,7 +86,7 @@ void ImagePreprocessor::threshProcess(Mat &framethreshold,Mat &Hue,Mat &Staturat
     for(int a=0;a<contours.size();a++)
     {
         boundRect[a] = boundingRect(contours[a]);
-        for (int b = 0;b<contours.size();b++)
+        for (int b = a+1;b<contours.size();b++)
         {
             double redpixel[1] = { 0 };
             double dark[1] = { 0 };
@@ -110,7 +104,7 @@ void ImagePreprocessor::threshProcess(Mat &framethreshold,Mat &Hue,Mat &Staturat
             center[b].x = boundRect[b].x + boundRect[b].width / 2;
             center[b].y = boundRect[b].y + boundRect[b].height / 2;
 
-            //颜色检测与饱和度检测
+            //颜色检测与饱和度检测，查找框定矩形中间是否存在所需颜色与饱和度像素
             if (abs(center[b].y - center[a].y) < abs(center[b].x - center[a].x)*0.5)//夹角
             {
                 for(int i=top;i<bottom;i++)
@@ -125,7 +119,7 @@ void ImagePreprocessor::threshProcess(Mat &framethreshold,Mat &Hue,Mat &Staturat
                             dark[0]++;
                     }
                 }
-                //进行二值图的绘制
+                //进行二值图的绘制，如存在上述像素，则根据亮度图进行绘制
                 if(redpixel[0]>0&&dark[0]>0)
                 {
                     if(boundRect[a].height>boundRect[a].width&&boundRect[b].height>boundRect[b].width)
@@ -161,6 +155,7 @@ void ImagePreprocessor::threshProcess(Mat &framethreshold,Mat &Hue,Mat &Staturat
 
 void ImagePreprocessor::wipePoints(Mat &framethreshold,Mat &hue,Mat &saturation)
 {
+    //对已经绘制好的灰度图进行除噪，通过轮廓上点是否存在所需颜色与饱和度像素，轮廓面积进行去噪
     vector<vector<Point>>contours;
     findContours(framethreshold,contours,CV_RETR_EXTERNAL,CV_CHAIN_APPROX_NONE);
     vector<Rect> boundRect(contours.size());
@@ -168,6 +163,8 @@ void ImagePreprocessor::wipePoints(Mat &framethreshold,Mat &hue,Mat &saturation)
     {
         double H_out[1]={0};
         double S_out[1]={0};
+        //轮廓面积
+        double lightArea=contourArea(contours[a],false);
         boundRect[a] = boundingRect(contours[a]);
         for(int b=0;b<contours[a].size();b++)
         {
@@ -180,7 +177,9 @@ void ImagePreprocessor::wipePoints(Mat &framethreshold,Mat &hue,Mat &saturation)
                     S_out[0]++;
             }
         }
-        if(H_out[0]==0&&S_out[0]==0)
+
+        //若不存在所需像素，则将像素变为黑色
+        if((H_out[0]==0&&S_out[0]==0)||lightArea<5)
         {
             for (int i = boundRect[a].y;i < boundRect[a].y + boundRect[a].height;i++)
             {

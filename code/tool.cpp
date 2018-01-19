@@ -90,10 +90,10 @@ void Tool::getTimeCount(const int& id)
     }
     else
     {
-        cout << "id - " << id << " Cost time: "
+        /*cout << "id - " << id << " Cost time: "
              << (getTickCount()-startTimes[id]) / getTickFrequency()
              << " s" << endl;
-
+*/
         startTimes[id] = getTickCount();
     }
 }
