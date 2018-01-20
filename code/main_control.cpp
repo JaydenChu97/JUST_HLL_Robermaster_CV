@@ -7,7 +7,7 @@ MainControl::MainControl()
     status = DETECTING;
 }
 
-bool MainControl::readSrcFile(const string &path)
+bool MainControl::readSrcFile(string path)
 {
     srcFilePath = path;
     srcFile.open(srcFilePath);
@@ -15,13 +15,30 @@ bool MainControl::readSrcFile(const string &path)
     return srcFile.isOpened();
 }
 
-void MainControl::run(const string &path)
+bool MainControl::readSrcFile(int cameraId)
+{
+    srcFilePath = string("cameraId:");
+    srcFilePath.push_back('0'+cameraId);
+    srcFile.open(cameraId);
+    srcFile.set(CAP_PROP_SETTINGS, -1);
+
+    return srcFile.isOpened();
+}
+
+void MainControl::run(const string& path)
 {
     //读取源文件
-    if(!readSrcFile(path))
+    if(path == "camera")
     {
-        //异常处理，防止读取失败
-        throw string("Can not read file from ") + path;
+        readSrcFile(1);
+    }
+    else
+    {
+        if(!readSrcFile(path))
+        {
+            //异常处理，防止读取失败
+            throw string("Can not read file from ") + path;
+        }
     }
 
     //创建原图像显示窗口

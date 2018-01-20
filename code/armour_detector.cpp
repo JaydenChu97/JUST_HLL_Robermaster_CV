@@ -44,9 +44,6 @@ bool ArmourDetector::detect(const Mat& srcImage)
 
     //存储筛选过符合条件的所有对灯柱对最小包围矩形即装甲板区域
     vector<RotatedRect> armourBlocks = extracArmourBlocks(lampBlocks,srcImage,dstImage);
-    Mat a=srcImage.clone();
-    drawBlocks(a,armourBlocks,Scalar(0,255,255));
-    imshow("a",a);
 
     //查看搜索出的每一个独立的团块
     drawBlocks(drawImage, armourBlocks, Scalar(100, 150, 200));
@@ -102,7 +99,19 @@ void ArmourDetector::fillLampBlock(Mat& srcImage, vector<vector<Point> >& blocks
     }
 
     //向当前正在填充的团块中加入数据，注意点的坐标是（x，y），指针访问的坐标顺序是（y，x），x为横轴，y为纵轴
+
+    //qDebug() << col << '\t' << row << endl;
+    //bug
     blocks.back().push_back(Point(col, row));
+    /*
+    qDebug() << blocks.back().size() << endl;
+    long long count = 0;
+    for(vector<vector<Point> >::iterator it = blocks.begin(); it != blocks.end(); it++)
+    {
+        count += it->size();
+    }
+    qDebug() << "total: " << count << endl;
+    */
     //避免已访问像素的重复访问，将其置零
     srcImage.at<uchar>(row, col) = 0;
 
@@ -187,7 +196,7 @@ vector<RotatedRect> ArmourDetector::calcBlocksInfo(const vector<vector<Point> >&
 vector<RotatedRect> ArmourDetector::extracArmourBlocks(const vector<RotatedRect>& lampBlocks,const Mat srcImage,const Mat dstImage)
 {
     vector<RotatedRect> armourBlocks;
-    vector<RotatedRect> initArmourBlocks;
+    vector<RotatedRect> allInitLightBlocks;
 
     //非空判定，如果为空的话在下面遍历的时候会出现一个bug，i-1溢出成2^32-1，使循环卡死
     if(lampBlocks.empty())
@@ -224,30 +233,41 @@ vector<RotatedRect> ArmourDetector::extracArmourBlocks(const vector<RotatedRect>
                     calcDeviation(mask,srcImage,avg,mean,percent);
 
                     //根据像素的离散程度再次筛选甲板
-                    if(mean>0.85&&percent<0.06&&avg<50)
+                    if(mean>0.85&&percent<0.06&&avg<50)                        
                     {
-                        cout<<mean<<" "<<percent<<" "<<" "<<avg<<endl;
+                        vector<RotatedRect> initLightBlocks;
+                        vector<RotatedRect> finialLightBlocks;
 
-                        initArmourBlocks.push_back(lampBlocks[i]);
-                        initArmourBlocks.push_back(lampBlocks[j]);
+                        initLightBlocks.push_back(lampBlocks[i]);
+                        initLightBlocks.push_back(lampBlocks[j]);
+                        allInitLightBlocks.push_back(lampBlocks[i]);
+                        allInitLightBlocks.push_back(lampBlocks[j]);
 
                         //外接正矩形连通域数量检测
-                        int labelvalue[1];
-                        //domainCountDetect(labelvalue[1],initArmourBlocks);
+                        domainCountDetect(allInitLightBlocks,initLightBlocks,finialLightBlocks,dstImage);
+                        cout << finialLightBlocks.size() << endl;
 
-                        vector<Point> points;
-                        Point2f iPoints[4], jPoints[4];
-                        lampBlocks[i].points(iPoints);
-                        lampBlocks[j].points(jPoints);
-                        for (unsigned int k = 0; k < 4; k++)
+                        //cout<<mean<<" "<<percent<<" "<<avg<<" "<<endl;
+                        vector<Point> armourPoints;
+                        if(finialLightBlocks.size()!=0)
                         {
-                            points.push_back(iPoints[k]);
-                            points.push_back(jPoints[k]);
-                        }
+                            Point2f lightPoints[finialLightBlocks.size()][4];
+                            for(unsigned int m = 0; m < finialLightBlocks.size() ; m++)
+                            {
+                                finialLightBlocks[m].points(lightPoints[m]);
+                                for(unsigned int n = 0; n < 4; n++)
+                                {
+                                    armourPoints.push_back(lightPoints[m][n]);
+                                }
+                                RotatedRect minRotatedRect = minAreaRect(armourPoints);
+                                armourBlocks.push_back(minRotatedRect);
+                            }
 
-                        RotatedRect minRotatedRect = minAreaRect(points);
-                        armourBlocks.push_back(minRotatedRect);
-                    }
+                        }
+                        Mat b=srcImage.clone();
+                        drawBlocks(b,armourBlocks,Scalar(0,255,255));
+                        imshow("b",b);
+                   }
                 }
             }
         }
@@ -338,12 +358,119 @@ void ArmourDetector::calcDeviation(const Mat& mask,const Mat& srcImage,double& a
     percent=notArmourRangPixel[0]/armourpixelCount[0];
 }
 
-/*
-void ArmourDetector::domainCountDetect(int& labelvalue[1],const vector<RotatedRect> &initArmourBlocks)
-{
+void ArmourDetector::domainCountDetect(const vector<RotatedRect> &allInitLightBlocks,const vector<RotatedRect> &initLightBlocks,vector<RotatedRect> &finialLightBlocks,const Mat& dstImage)
+{       
+    Mat labelImg=Mat(dstImage.size(),CV_8UC1,Scalar(0));
+    drawLabelImg(allInitLightBlocks,labelImg);
+    Mat kernel=getStructuringElement(MORPH_RECT,Size(1,15));
+    dilate(labelImg,labelImg,kernel);
+    imshow("labelImg",labelImg);
 
+    for (int i = 0; i < initLightBlocks.size()-1; i++)
+    {
+        for (int j = i+1;j < initLightBlocks.size();j++)
+        {
+            double a1=initLightBlocks[i].boundingRect2f().x,
+                   a2=initLightBlocks[i].boundingRect2f().x+initLightBlocks[i].boundingRect2f().width,
+                   a3=initLightBlocks[j].boundingRect2f().x,
+                   a4=initLightBlocks[j].boundingRect2f().x+initLightBlocks[j].boundingRect2f().width;
+            double b1=initLightBlocks[i].boundingRect2f().y,
+                   b2=initLightBlocks[i].boundingRect2f().y+initLightBlocks[i].boundingRect2f().height,
+                   b3=initLightBlocks[j].boundingRect2f().y,
+                   b4=initLightBlocks[j].boundingRect2f().y+initLightBlocks[j].boundingRect2f().height;
+            double left = min(min(min(a1, a2), a3), a4);//左边界
+            double right = max(max(max(a1, a2), a3), a4);//右边界
+            double top = min(min(min(b1, b2), b3), b4);//上边界
+            double bottom = max(max(max(b1, b2), b3), b4);//下边界
+
+            int labelvalue[1]={0};
+            Point seed, neighbor;
+            int rows = bottom;
+            int cols = right;
+            stack<Point> pointStack; // 堆栈
+
+            for (int i = top; i < rows; i++)
+            {
+                uchar* data = labelImg.ptr<uchar>(i);//获取一行的点
+                for (int j = left; j < cols; j++)
+                {
+                    if (data[j] == 255)
+                    {
+                        labelvalue[0]++; //不断将标签数加一
+                        seed = Point(j, i);// Point坐标
+                        labelImg.at<uchar>(seed) = labelvalue[0];//标签
+                        pointStack.push(seed);//将像素seed压入栈，增加数据
+
+                        while (!pointStack.empty())//死循环，直到堆栈为空
+                        {
+                            neighbor = Point(seed.x - 1, seed.y);//左像素
+                            if ((seed.x != 0) && (labelImg.at<uchar>(neighbor) == 255))
+                            {
+                                labelImg.at<uchar>(neighbor) = labelvalue[0];
+                                pointStack.push(neighbor);
+                            }
+
+                            neighbor = Point(seed.x + 1, seed.y);//右像素
+                            if ((seed.x != (cols - 1)) && (labelImg.at<uchar>(neighbor) == 255))
+                            {
+                                labelImg.at<uchar>(neighbor) = labelvalue[0];
+                                pointStack.push(neighbor);
+                            }
+
+                            neighbor = Point(seed.x, seed.y - 1);//上像素
+                            if ((seed.y != 0) && (labelImg.at<uchar>(neighbor) == 255))
+                            {
+                                labelImg.at<uchar>(neighbor) = labelvalue[0];
+                                pointStack.push(neighbor);
+                            }
+
+                            neighbor = Point(seed.x, seed.y + 1);//下像素
+                            if ((seed.y != (rows - 1)) && (labelImg.at<uchar>(neighbor) == 255))
+                            {
+                                labelImg.at<uchar>(neighbor) = labelvalue[0];
+                                pointStack.push(neighbor);
+                            }
+                            seed = pointStack.top();//  获取堆栈上的顶部像素并将其标记为相同的标签
+                            pointStack.pop();//弹出栈顶像素
+                        }
+                    }
+                }
+            }
+            //cout<<labelvalue[0]<<endl;
+            if(labelvalue[0]==2)
+            {
+                if(abs(initLightBlocks[i].center.y-initLightBlocks[j].center.y)<0.5*abs(initLightBlocks[i].center.x-initLightBlocks[j].center.x))
+                {
+                    finialLightBlocks.push_back(initLightBlocks[i]);
+                    finialLightBlocks.push_back(initLightBlocks[j]);
+                }
+            }
+        }
+    }
 }
-*/
+
+void ArmourDetector::drawLabelImg(const vector<RotatedRect> &allInitLightBlocks,Mat&labelImg)
+{
+    for(int i=0;i<allInitLightBlocks.size();i++)
+    {
+        int x=allInitLightBlocks[i].boundingRect2f().x;
+        int y=allInitLightBlocks[i].boundingRect2f().y;
+        int width=allInitLightBlocks[i].boundingRect2f().width;
+        int height=allInitLightBlocks[i].boundingRect2f().height;
+
+        Point root_points[1][4];
+        root_points[0][0] = Point(x,y);
+        root_points[0][1] = Point(x,y+height);
+        root_points[0][2] = Point(x+width,y+height);
+        root_points[0][3] = Point(x+width,y);
+
+        const Point* ppt[1] = {root_points[0]};
+        int npt[] = {4};
+        polylines(labelImg, ppt, npt, 1, 1, Scalar(255),1,8,0);
+        fillPoly(labelImg, ppt, npt, 1, Scalar(255));
+    }
+}
+
 void ArmourDetector::markArmourBlocks(const Mat& srcImage, const Mat& dstImage, const vector<RotatedRect> &armourBlocks)
 {
     //清除之前运算的结果

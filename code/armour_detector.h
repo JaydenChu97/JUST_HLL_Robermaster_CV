@@ -28,6 +28,7 @@
 #define ARMOUR_DETECTOR_H
 
 #include "image_preprocessor.h"
+#include "stack"
 
 namespace HCVC {
 //! @addtogroup armour_recognition
@@ -165,7 +166,9 @@ private:
      */
     void calcDeviation(const Mat& mask, const Mat& srcImage, double& avg, double& mean, double&percent);
 
-    //void domainCountDetect(int& labelvalue[1],const vector<RotatedRect> &initArmourBlocks);
+    void domainCountDetect(const vector<RotatedRect> &allInitLightBlocks,const vector<RotatedRect> &initLightBlocks, vector<RotatedRect> &finialLightBlocks,const Mat& dstImage);
+
+    void drawLabelImg(const vector<RotatedRect> &allInitLightBlocks,Mat&labelImg);
 
     /**
     * @brief 对最后提取出的灯柱区域评分，选出最优区域
