@@ -166,8 +166,22 @@ private:
      */
     void calcDeviation(const Mat& mask, const Mat& srcImage, double& avg, double& mean, double&percent);
 
+    /**
+     * @brief 连通域数量检测
+     * @details 求两灯柱外接矩形，检测矩形内的连通域，若连通域数量为2，则返回该灯柱团块
+     * @param[in] allInitLightBlocks 初步筛选一帧总的灯柱矩形
+     * @param[in] initLightBlocks 初步筛选两个外接矩形
+     * @param[in] finialLightBlocks 连通域数量检测后符合条件的矩形
+     * @return null
+     */
     void domainCountDetect(const vector<RotatedRect> &allInitLightBlocks,const vector<RotatedRect> &initLightBlocks, vector<RotatedRect> &finialLightBlocks,const Mat& dstImage);
 
+    /**
+     * @brief 绘制连通域数量检测的团块
+     * @details 根据初步筛选的总团块绘制连通域数量检测的二值化图
+     * @param[in] allInitLightBlocks 初步筛选的总团块
+     * @return null
+     */
     void drawLabelImg(const vector<RotatedRect> &allInitLightBlocks,Mat&labelImg);
 
     /**

@@ -359,10 +359,13 @@ void ArmourDetector::calcDeviation(const Mat& mask,const Mat& srcImage,double& a
 }
 
 void ArmourDetector::domainCountDetect(const vector<RotatedRect> &allInitLightBlocks,const vector<RotatedRect> &initLightBlocks,vector<RotatedRect> &finialLightBlocks,const Mat& dstImage)
-{       
+{
+    /*
     Mat labelImg=Mat(dstImage.size(),CV_8UC1,Scalar(0));
     drawLabelImg(allInitLightBlocks,labelImg);
-    Mat kernel=getStructuringElement(MORPH_RECT,Size(1,15));
+    */
+    Mat kernel=getStructuringElement(MORPH_RECT,Size(1,15));    
+    Mat labelImg=dstImage.clone();
     dilate(labelImg,labelImg,kernel);
     imshow("labelImg",labelImg);
 
@@ -438,7 +441,7 @@ void ArmourDetector::domainCountDetect(const vector<RotatedRect> &allInitLightBl
             }
             //cout<<labelvalue[0]<<endl;
             if(labelvalue[0]==2)
-            {
+            {               
                 if(abs(initLightBlocks[i].center.y-initLightBlocks[j].center.y)<0.5*abs(initLightBlocks[i].center.x-initLightBlocks[j].center.x))
                 {
                     finialLightBlocks.push_back(initLightBlocks[i]);
