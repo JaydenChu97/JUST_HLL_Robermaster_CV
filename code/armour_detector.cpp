@@ -43,7 +43,10 @@ bool ArmourDetector::detect(const Mat& srcImage)
     drawBlocks(drawImage, lampBlocks, Scalar(200, 150, 100));
 
     //存储筛选过符合条件的所有对灯柱对最小包围矩形即装甲板区域
-    vector<RotatedRect> armourBlocks = extracArmourBlocks(lampBlocks);
+    vector<RotatedRect> armourBlocks = extracArmourBlocks(lampBlocks,srcImage,dstImage);
+    Mat a=srcImage.clone();
+    drawBlocks(a,armourBlocks,Scalar(0,255,255));
+    imshow("a",a);
 
     //查看搜索出的每一个独立的团块
     drawBlocks(drawImage, armourBlocks, Scalar(100, 150, 200));
@@ -54,6 +57,7 @@ bool ArmourDetector::detect(const Mat& srcImage)
     }
 
     //对每个装甲板区域评分
+
     markArmourBlocks(srcImage, dstImage, armourBlocks);
 
     drawBlocks(drawImage, vector<RotatedRect>(1, optimalArmourBlocks.front().block), Scalar(180, 200, 220));
@@ -165,25 +169,25 @@ vector<RotatedRect> ArmourDetector::calcBlocksInfo(const vector<vector<Point> >&
     for(unsigned int i = 0; i < blocks.size(); i++)
     {
         RotatedRect minRotatedRect = minAreaRect(blocks[i]);
-
-        if(minRotatedRect.size.area() > params.minArea
-        &&((minRotatedRect.angle > -params.angleRange
-          &&((minRotatedRect.size.height/minRotatedRect.size.width >= params.minHeightWidthRat)
-            &&(minRotatedRect.size.height/minRotatedRect.size.width <= params.maxHeightWidthRat)))
-         ||(minRotatedRect.angle < params.angleRange-90
-           &&((minRotatedRect.size.width/minRotatedRect.size.height >= params.minHeightWidthRat)
-            &&(minRotatedRect.size.width/minRotatedRect.size.height <= params.maxHeightWidthRat)))))
-        {
-            lampBlocks.push_back(minRotatedRect);
-        }
+            if(minRotatedRect.size.area() > params.minArea
+            &&((minRotatedRect.angle > -params.angleRange
+              &&((minRotatedRect.size.height/minRotatedRect.size.width >= params.minHeightWidthRat)
+                &&(minRotatedRect.size.height/minRotatedRect.size.width <= params.maxHeightWidthRat)))
+             ||(minRotatedRect.angle < params.angleRange-90
+               &&((minRotatedRect.size.width/minRotatedRect.size.height >= params.minHeightWidthRat)
+                &&(minRotatedRect.size.width/minRotatedRect.size.height <= params.maxHeightWidthRat)))))
+            {
+                lampBlocks.push_back(minRotatedRect);
+            }
     }
 
     return lampBlocks;
 }
 
-vector<RotatedRect> ArmourDetector::extracArmourBlocks(const vector<RotatedRect>& lampBlocks)
+vector<RotatedRect> ArmourDetector::extracArmourBlocks(const vector<RotatedRect>& lampBlocks,const Mat srcImage,const Mat dstImage)
 {
     vector<RotatedRect> armourBlocks;
+    vector<RotatedRect> initArmourBlocks;
 
     //非空判定，如果为空的话在下面遍历的时候会出现一个bug，i-1溢出成2^32-1，使循环卡死
     if(lampBlocks.empty())
@@ -195,45 +199,151 @@ vector<RotatedRect> ArmourDetector::extracArmourBlocks(const vector<RotatedRect>
     {
         for(unsigned int j = i + 1; j < lampBlocks.size(); j++)
         {
-            if(fabs(lampBlocks[i].boundingRect2f().width-lampBlocks[j].boundingRect2f().width) <= params.maxWidthRat * lampBlocks[i].boundingRect2f().width
-            && fabs(lampBlocks[i].boundingRect2f().height-lampBlocks[j].boundingRect2f().height) <= params.maxHeightRat * lampBlocks[i].boundingRect2f().height
-            /*&&fabs(minRotatedRects[i].angle-minRotatedRects[j].angle) <= maxAngleDiff*/)
+            if(abs(lampBlocks[i].center.y-lampBlocks[j].center.y)<0.5*abs(lampBlocks[i].center.x-lampBlocks[j].center.x))
             {
-                float distance = 0;
-                distance += powf((lampBlocks[i].center.x-lampBlocks[j].center.x), 2);
-                distance += powf((lampBlocks[i].center.y-lampBlocks[j].center.y), 2);
-                distance = sqrt(distance);
-                if(distance / lampBlocks[i].boundingRect2f().height < params.maxHeightGapRat
-                && distance / lampBlocks[i].boundingRect2f().height > params.minHeightGapRat
-                && fabs(lampBlocks[i].center.y-lampBlocks[j].center.y) <  2 * lampBlocks[i].boundingRect2f().height)
+                if((lampBlocks[i].boundingRect2f().area()>0.2*lampBlocks[j].boundingRect2f().area())&&(lampBlocks[j].boundingRect2f().area()>0.2*lampBlocks[i].boundingRect2f().area()))
                 {
-                    vector<Point> points;
-                    Point2f iPoints[4], jPoints[4];
-                    lampBlocks[i].points(iPoints);
-                    lampBlocks[j].points(jPoints);
+                    //建立初始团块最小外接矩形
+                    vector<Point> initPoints;
+                    Point2f firstPoints[4], secondPoints[4];
+                    lampBlocks[i].points(firstPoints);
+                    lampBlocks[j].points(secondPoints);
                     for(unsigned int k = 0; k < 4; k++)
                     {
-                        points.push_back(iPoints[k]);
-                        points.push_back(jPoints[k]);
+                        initPoints.push_back(firstPoints[k]);
+                        initPoints.push_back(secondPoints[k]);
                     }
 
-                    RotatedRect minRotatedRect = minAreaRect(points);
-                    if((minRotatedRect.size.height > minRotatedRect.size.width && minRotatedRect.angle < -60)
-                    || (minRotatedRect.size.height < minRotatedRect.size.width && minRotatedRect.angle > -30))
+                    //创建掩码区域为包含装甲板的旋转矩形
+                    Mat mask(srcImage.size(), CV_8UC1, Scalar(0));
+                    estableMask(mask,dstImage,initPoints);
+
+                    //计算甲板区间范围内的像素比例
+                    double avg,mean;
+                    double percent;
+                    calcDeviation(mask,srcImage,avg,mean,percent);
+
+                    //根据像素的离散程度再次筛选甲板
+                    if(mean>0.85&&percent<0.06&&avg<50)
                     {
+                        cout<<mean<<" "<<percent<<" "<<" "<<avg<<endl;
+
+                        initArmourBlocks.push_back(lampBlocks[i]);
+                        initArmourBlocks.push_back(lampBlocks[j]);
+
+                        //外接正矩形连通域数量检测
+                        int labelvalue[1];
+                        //domainCountDetect(labelvalue[1],initArmourBlocks);
+
+                        vector<Point> points;
+                        Point2f iPoints[4], jPoints[4];
+                        lampBlocks[i].points(iPoints);
+                        lampBlocks[j].points(jPoints);
+                        for (unsigned int k = 0; k < 4; k++)
+                        {
+                            points.push_back(iPoints[k]);
+                            points.push_back(jPoints[k]);
+                        }
+
+                        RotatedRect minRotatedRect = minAreaRect(points);
                         armourBlocks.push_back(minRotatedRect);
                     }
                 }
             }
-
         }
     }
-
-    cout << "Num of lampBlocksRects: " << armourBlocks.size() << endl;
+    //cout << "Num of lampBlocksRects: " << armourBlocks.size() << endl;
 
     return armourBlocks;
 }
 
+void ArmourDetector::estableMask(Mat mask,const Mat& dstImage,const vector<Point> initPoints)
+{
+    //绘制最小外接矩形
+    RotatedRect minRect=minAreaRect(initPoints);
+
+    //寻找矩形的四个点
+    Point2f fpoints[4];
+    minRect.points(fpoints);
+
+    //剪去旋转矩形的多余边角，得到装甲板的平行四边形区域
+    cutEdgeOfRect(fpoints);
+
+    //浮点数转换整数
+    Point points[4];
+    for(unsigned int i = 0; i < 4; i++)
+    {
+        points[i] = Point(static_cast<int>(fpoints[i].x), static_cast<int>(fpoints[i].y));
+    }
+
+    const Point* pts = points;
+    const int npts=4;
+
+    //去除灯柱灯光区域影响
+    Mat invDstImage;
+    threshold(dstImage, invDstImage, 0, 255, THRESH_BINARY_INV);
+
+    fillConvexPoly(mask,pts,npts,Scalar(255));
+    bitwise_and(mask,invDstImage,mask);
+}
+
+void ArmourDetector::calcDeviation(const Mat& mask,const Mat& srcImage,double& avg,double& mean,double& percent)
+{
+    Mat gray=Mat (srcImage.rows,srcImage.cols,CV_8UC1);
+    cvtColor(srcImage,gray,COLOR_BGR2GRAY);
+    int rows=srcImage.rows;
+    int cols=srcImage.cols;
+    double sum=0;//像素值的总和
+    double armourpixelCount[1] = { 0 };//甲板像素数量
+    double armourRangPixel[1]={0};//所需区间内像素
+    double notArmourRangPixel[1] = { 0 };//远离甲板平均值像素
+    avg=0;//像素的平均值
+    mean=0;//区间范围内像素所占比例
+    percent=0;//区间外像素所占比例
+
+    //计算甲板像素平均值
+    for(int i=0;i<rows;i++)
+    {
+        const uchar* grayData=gray.ptr<uchar>(i);
+        const uchar* maskData=mask.ptr<uchar>(i);
+        for(int j=0;j<cols;j++)
+        {
+            if(maskData[j]==255)
+            {
+                sum+=grayData[j];
+                armourpixelCount[0]++;
+            }
+        }
+    }
+    avg=sum/armourpixelCount[0];
+
+    //求甲板像素给定区间范围内与外像素值
+    int range = (int)avg;
+    for (int i = 0;i < rows;i++)
+    {
+        const uchar* grayData = gray.ptr<uchar>(i);
+        const uchar* maskData = mask.ptr<uchar>(i);
+        for (int j = 0;j < cols;j++)
+        {
+            if (maskData[j] == 255)
+            {
+                if (grayData[j]<range + 10 && grayData[j]>range - 10)
+                    armourRangPixel[0]++;
+                if (grayData[j] > range + 15)
+                    notArmourRangPixel[0]++;
+            }
+        }
+    }
+    mean=armourRangPixel[0]/armourpixelCount[0];
+    percent=notArmourRangPixel[0]/armourpixelCount[0];
+}
+
+/*
+void ArmourDetector::domainCountDetect(int& labelvalue[1],const vector<RotatedRect> &initArmourBlocks)
+{
+
+}
+*/
 void ArmourDetector::markArmourBlocks(const Mat& srcImage, const Mat& dstImage, const vector<RotatedRect> &armourBlocks)
 {
     //清除之前运算的结果

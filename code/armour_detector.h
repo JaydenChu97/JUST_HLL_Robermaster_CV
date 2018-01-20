@@ -140,10 +140,32 @@ private:
 
     /**
     * @brief 进一步筛选，匹配团块即灯柱对，提取出最优目标
+    * @details 通过初步筛选，甲板像素离散检测，框定区域内连通域数量检测确定甲板
     * @param[in] minRotatedRects 包围团块的最小旋转矩形数组
     * @return 包围灯柱对即装甲板区域的最小旋转矩形数组
     */
-    vector<RotatedRect> extracArmourBlocks(const vector<RotatedRect>& minRotatedRects);
+    vector<RotatedRect> extracArmourBlocks(const vector<RotatedRect>& lampBlocks,const Mat srcImage,const Mat dstImage);
+
+    /**
+     * @brief 建立检测所需要的包含两灯柱的掩码
+     * @param[in] initPoints 通过初步筛选两灯柱的最小外接矩形的角
+     * @return null
+     */
+    void estableMask(Mat mask,const Mat& dstImage,const vector<Point> initPoints);
+
+    /**
+     * @brief 根据灰度图计算甲板的区间范围的值
+     * @details 计算甲板像素平均值左右与大于某区间的像素比例
+     * @param[in] mask 建立的掩码
+     * @param[in] srcImage 原图像
+     * @param[in] avg 像素的平均值
+     * @param[in] mean 区间范围内像素的平均值
+     * @param[in] percent 区间范围外像素的平均值
+     * @return null
+     */
+    void calcDeviation(const Mat& mask, const Mat& srcImage, double& avg, double& mean, double&percent);
+
+    //void domainCountDetect(int& labelvalue[1],const vector<RotatedRect> &initArmourBlocks);
 
     /**
     * @brief 对最后提取出的灯柱区域评分，选出最优区域

@@ -70,25 +70,23 @@ public:
     Mat preprocess(const Mat& srcImage);
 
     /**
-     * @brief 初始化二值化图
-     * @param[in] 建立的背景
-     */
-    void initThreshold(Mat &framethreshold);
-
-    /**
-     * @brief 进行灯条的筛选
+     * @brief 进行灯条的筛选，以V通道为主要通道，H与S通道为辅助通道构建二值化图
+     * @details 两两框定V通道团块，若框定区域内存在设置的H与S通道阈值的点，则以V通道为模板绘制二值化图
      * @param[in] framethreshold 储存二值化图像
      * @param[in] Hue hue通道
      * @param[in] Statulation saturation通道
      * @param[in] Value value通道
+     * @return null
      */
     void threshProcess(Mat &framethreshold,Mat &Hue,Mat &Staturation,Mat &Value);
 
     /**
-     * @brief 对二值化图进行去噪处理
+     * @brief 以H与S通道为辅助通道，轮廓面积对二值化图进行去噪处理
+     * @details 若绘制的团块轮廓上的点不存在H于S通道设置阈值内的点，则去除此团块
      * @param[in] framethreshold 二值化图
      * @param[in] hue H通道
      * @param[in] saturation S通道
+     * @return null
      */
     void wipePoints(Mat &framethreshold,Mat &hue,Mat &saturation);
 
