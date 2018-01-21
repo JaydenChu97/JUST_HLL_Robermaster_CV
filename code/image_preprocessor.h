@@ -30,9 +30,9 @@
 #include <qDebug>
 
 /*C++标准库*/
-#include "algorithm"
-#include "iostream"
-#include "string"
+#include <algorithm>
+#include <iostream>
+#include <string>
 
 /*opencv库*/
 #include "opencv2/opencv.hpp"
@@ -73,14 +73,16 @@ public:
 
     /**
      * @brief 进行灯条的筛选，以V通道为主要通道，H与S通道为辅助通道构建二值化图
-     * @details 两两框定V通道团块，若框定区域内存在设置的H与S通道阈值的点，则以V通道为模板绘制二值化图
+     * @details 两两框定V通道团块，
+     *          若框定区域内存在设置的H与S通道阈值的点，
+     *          则以V通道为模板绘制二值化图
      * @param[in] framethreshold 储存二值化图像
      * @param[in] Hue hue通道
      * @param[in] Statulation saturation通道
      * @param[in] Value value通道
      * @return null
      */
-    void threshProcess(Mat &framethreshold,Mat &Hue,Mat &Staturation,Mat &Value);
+    void threshProcess(Mat& framethreshold,Mat& Hue,Mat& Staturation,Mat& Value);
 
     /**
      * @brief 以H与S通道为辅助通道，轮廓面积对二值化图进行去噪处理
@@ -90,7 +92,7 @@ public:
      * @param[in] saturation S通道
      * @return null
      */
-    void wipePoints(Mat &framethreshold,Mat &hue,Mat &saturation);
+    void wipePoints(Mat& framethreshold,Mat& hue,Mat& saturation);
 
     /**
     * @brief 设置预处理图像阈值

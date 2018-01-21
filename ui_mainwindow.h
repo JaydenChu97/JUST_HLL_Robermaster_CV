@@ -31,7 +31,7 @@ class Ui_MainWindow
 {
 public:
     QWidget *centralWidget;
-    QWidget *widget;
+    QWidget *layoutWidget;
     QVBoxLayout *verticalLayout_5;
     QHBoxLayout *horizontalLayout_7;
     QVBoxLayout *verticalLayout;
@@ -77,19 +77,13 @@ public:
     QVBoxLayout *verticalLayout_3;
     QHBoxLayout *horizontalLayout_10;
     QLabel *label_3;
-    QDoubleSpinBox *maxWidthRat;
+    QDoubleSpinBox *inRangePercent;
     QHBoxLayout *horizontalLayout_11;
     QLabel *label_4;
-    QDoubleSpinBox *maxHeightRat;
+    QDoubleSpinBox *outRangePercent;
     QHBoxLayout *horizontalLayout_12;
     QLabel *label_5;
-    QDoubleSpinBox *maxAngleDiff;
-    QHBoxLayout *horizontalLayout_13;
-    QLabel *label_6;
-    QDoubleSpinBox *maxHeightGapRat;
-    QHBoxLayout *horizontalLayout_14;
-    QLabel *label_7;
-    QDoubleSpinBox *minHeightGapRat;
+    QDoubleSpinBox *armourPixelAvg;
     QMenuBar *menuBar;
     QToolBar *mainToolBar;
     QStatusBar *statusBar;
@@ -103,10 +97,10 @@ public:
         centralWidget->setObjectName(QStringLiteral("centralWidget"));
         centralWidget->setEnabled(true);
         centralWidget->setMouseTracking(false);
-        widget = new QWidget(centralWidget);
-        widget->setObjectName(QStringLiteral("widget"));
-        widget->setGeometry(QRect(20, 10, 591, 521));
-        verticalLayout_5 = new QVBoxLayout(widget);
+        layoutWidget = new QWidget(centralWidget);
+        layoutWidget->setObjectName(QStringLiteral("layoutWidget"));
+        layoutWidget->setGeometry(QRect(20, 10, 591, 521));
+        verticalLayout_5 = new QVBoxLayout(layoutWidget);
         verticalLayout_5->setSpacing(6);
         verticalLayout_5->setContentsMargins(11, 11, 11, 11);
         verticalLayout_5->setObjectName(QStringLiteral("verticalLayout_5"));
@@ -120,12 +114,12 @@ public:
         horizontalLayout = new QHBoxLayout();
         horizontalLayout->setSpacing(6);
         horizontalLayout->setObjectName(QStringLiteral("horizontalLayout"));
-        label_redMinText = new QLabel(widget);
+        label_redMinText = new QLabel(layoutWidget);
         label_redMinText->setObjectName(QStringLiteral("label_redMinText"));
 
         horizontalLayout->addWidget(label_redMinText);
 
-        label_redMinValue = new QLabel(widget);
+        label_redMinValue = new QLabel(layoutWidget);
         label_redMinValue->setObjectName(QStringLiteral("label_redMinValue"));
 
         horizontalLayout->addWidget(label_redMinValue);
@@ -133,7 +127,7 @@ public:
 
         verticalLayout->addLayout(horizontalLayout);
 
-        horizontalScrollBar_redMin = new QScrollBar(widget);
+        horizontalScrollBar_redMin = new QScrollBar(layoutWidget);
         horizontalScrollBar_redMin->setObjectName(QStringLiteral("horizontalScrollBar_redMin"));
         horizontalScrollBar_redMin->setMaximum(180);
         horizontalScrollBar_redMin->setValue(85);
@@ -144,12 +138,12 @@ public:
         horizontalLayout_2 = new QHBoxLayout();
         horizontalLayout_2->setSpacing(6);
         horizontalLayout_2->setObjectName(QStringLiteral("horizontalLayout_2"));
-        label_greenMinText = new QLabel(widget);
+        label_greenMinText = new QLabel(layoutWidget);
         label_greenMinText->setObjectName(QStringLiteral("label_greenMinText"));
 
         horizontalLayout_2->addWidget(label_greenMinText);
 
-        label_greenMinValue = new QLabel(widget);
+        label_greenMinValue = new QLabel(layoutWidget);
         label_greenMinValue->setObjectName(QStringLiteral("label_greenMinValue"));
 
         horizontalLayout_2->addWidget(label_greenMinValue);
@@ -157,7 +151,7 @@ public:
 
         verticalLayout->addLayout(horizontalLayout_2);
 
-        horizontalScrollBar_greenMin = new QScrollBar(widget);
+        horizontalScrollBar_greenMin = new QScrollBar(layoutWidget);
         horizontalScrollBar_greenMin->setObjectName(QStringLiteral("horizontalScrollBar_greenMin"));
         horizontalScrollBar_greenMin->setMaximum(255);
         horizontalScrollBar_greenMin->setValue(100);
@@ -168,12 +162,12 @@ public:
         horizontalLayout_3 = new QHBoxLayout();
         horizontalLayout_3->setSpacing(6);
         horizontalLayout_3->setObjectName(QStringLiteral("horizontalLayout_3"));
-        label_blueMinText = new QLabel(widget);
+        label_blueMinText = new QLabel(layoutWidget);
         label_blueMinText->setObjectName(QStringLiteral("label_blueMinText"));
 
         horizontalLayout_3->addWidget(label_blueMinText);
 
-        label_blueMinValue = new QLabel(widget);
+        label_blueMinValue = new QLabel(layoutWidget);
         label_blueMinValue->setObjectName(QStringLiteral("label_blueMinValue"));
 
         horizontalLayout_3->addWidget(label_blueMinValue);
@@ -181,7 +175,7 @@ public:
 
         verticalLayout->addLayout(horizontalLayout_3);
 
-        horizontalScrollBar_blueMin = new QScrollBar(widget);
+        horizontalScrollBar_blueMin = new QScrollBar(layoutWidget);
         horizontalScrollBar_blueMin->setObjectName(QStringLiteral("horizontalScrollBar_blueMin"));
         horizontalScrollBar_blueMin->setMaximum(255);
         horizontalScrollBar_blueMin->setValue(220);
@@ -199,12 +193,12 @@ public:
         horizontalLayout_4 = new QHBoxLayout();
         horizontalLayout_4->setSpacing(6);
         horizontalLayout_4->setObjectName(QStringLiteral("horizontalLayout_4"));
-        label_redMaxText = new QLabel(widget);
+        label_redMaxText = new QLabel(layoutWidget);
         label_redMaxText->setObjectName(QStringLiteral("label_redMaxText"));
 
         horizontalLayout_4->addWidget(label_redMaxText);
 
-        label_redMaxValue = new QLabel(widget);
+        label_redMaxValue = new QLabel(layoutWidget);
         label_redMaxValue->setObjectName(QStringLiteral("label_redMaxValue"));
 
         horizontalLayout_4->addWidget(label_redMaxValue);
@@ -212,7 +206,7 @@ public:
 
         verticalLayout_2->addLayout(horizontalLayout_4);
 
-        horizontalScrollBar_redMax = new QScrollBar(widget);
+        horizontalScrollBar_redMax = new QScrollBar(layoutWidget);
         horizontalScrollBar_redMax->setObjectName(QStringLiteral("horizontalScrollBar_redMax"));
         horizontalScrollBar_redMax->setMaximum(180);
         horizontalScrollBar_redMax->setValue(115);
@@ -224,12 +218,12 @@ public:
         horizontalLayout_5 = new QHBoxLayout();
         horizontalLayout_5->setSpacing(6);
         horizontalLayout_5->setObjectName(QStringLiteral("horizontalLayout_5"));
-        label_greenMaxText = new QLabel(widget);
+        label_greenMaxText = new QLabel(layoutWidget);
         label_greenMaxText->setObjectName(QStringLiteral("label_greenMaxText"));
 
         horizontalLayout_5->addWidget(label_greenMaxText);
 
-        label_greenMaxValue = new QLabel(widget);
+        label_greenMaxValue = new QLabel(layoutWidget);
         label_greenMaxValue->setObjectName(QStringLiteral("label_greenMaxValue"));
 
         horizontalLayout_5->addWidget(label_greenMaxValue);
@@ -237,7 +231,7 @@ public:
 
         verticalLayout_2->addLayout(horizontalLayout_5);
 
-        horizontalScrollBar_greenMax = new QScrollBar(widget);
+        horizontalScrollBar_greenMax = new QScrollBar(layoutWidget);
         horizontalScrollBar_greenMax->setObjectName(QStringLiteral("horizontalScrollBar_greenMax"));
         horizontalScrollBar_greenMax->setMaximum(255);
         horizontalScrollBar_greenMax->setValue(255);
@@ -248,12 +242,12 @@ public:
         horizontalLayout_6 = new QHBoxLayout();
         horizontalLayout_6->setSpacing(6);
         horizontalLayout_6->setObjectName(QStringLiteral("horizontalLayout_6"));
-        label_blueMaxText = new QLabel(widget);
+        label_blueMaxText = new QLabel(layoutWidget);
         label_blueMaxText->setObjectName(QStringLiteral("label_blueMaxText"));
 
         horizontalLayout_6->addWidget(label_blueMaxText);
 
-        label_blueMaxValue = new QLabel(widget);
+        label_blueMaxValue = new QLabel(layoutWidget);
         label_blueMaxValue->setObjectName(QStringLiteral("label_blueMaxValue"));
 
         horizontalLayout_6->addWidget(label_blueMaxValue);
@@ -261,7 +255,7 @@ public:
 
         verticalLayout_2->addLayout(horizontalLayout_6);
 
-        horizontalScrollBar_blueMax = new QScrollBar(widget);
+        horizontalScrollBar_blueMax = new QScrollBar(layoutWidget);
         horizontalScrollBar_blueMax->setObjectName(QStringLiteral("horizontalScrollBar_blueMax"));
         horizontalScrollBar_blueMax->setMaximum(255);
         horizontalScrollBar_blueMax->setValue(150);
@@ -284,12 +278,12 @@ public:
         horizontalLayout_8 = new QHBoxLayout();
         horizontalLayout_8->setSpacing(6);
         horizontalLayout_8->setObjectName(QStringLiteral("horizontalLayout_8"));
-        label = new QLabel(widget);
+        label = new QLabel(layoutWidget);
         label->setObjectName(QStringLiteral("label"));
 
         horizontalLayout_8->addWidget(label);
 
-        angleRange = new QDoubleSpinBox(widget);
+        angleRange = new QDoubleSpinBox(layoutWidget);
         angleRange->setObjectName(QStringLiteral("angleRange"));
         angleRange->setMaximum(1000);
         angleRange->setSingleStep(1);
@@ -302,12 +296,12 @@ public:
         horizontalLayout_9 = new QHBoxLayout();
         horizontalLayout_9->setSpacing(6);
         horizontalLayout_9->setObjectName(QStringLiteral("horizontalLayout_9"));
-        label_2 = new QLabel(widget);
+        label_2 = new QLabel(layoutWidget);
         label_2->setObjectName(QStringLiteral("label_2"));
 
         horizontalLayout_9->addWidget(label_2);
 
-        minArea = new QDoubleSpinBox(widget);
+        minArea = new QDoubleSpinBox(layoutWidget);
         minArea->setObjectName(QStringLiteral("minArea"));
         minArea->setMaximum(1000);
 
@@ -319,12 +313,12 @@ public:
         horizontalLayout_15 = new QHBoxLayout();
         horizontalLayout_15->setSpacing(6);
         horizontalLayout_15->setObjectName(QStringLiteral("horizontalLayout_15"));
-        label_8 = new QLabel(widget);
+        label_8 = new QLabel(layoutWidget);
         label_8->setObjectName(QStringLiteral("label_8"));
 
         horizontalLayout_15->addWidget(label_8);
 
-        maxHeightWidthRat = new QDoubleSpinBox(widget);
+        maxHeightWidthRat = new QDoubleSpinBox(layoutWidget);
         maxHeightWidthRat->setObjectName(QStringLiteral("maxHeightWidthRat"));
         maxHeightWidthRat->setMaximum(1000);
 
@@ -336,12 +330,12 @@ public:
         horizontalLayout_16 = new QHBoxLayout();
         horizontalLayout_16->setSpacing(6);
         horizontalLayout_16->setObjectName(QStringLiteral("horizontalLayout_16"));
-        label_9 = new QLabel(widget);
+        label_9 = new QLabel(layoutWidget);
         label_9->setObjectName(QStringLiteral("label_9"));
 
         horizontalLayout_16->addWidget(label_9);
 
-        minHeightWidthRat = new QDoubleSpinBox(widget);
+        minHeightWidthRat = new QDoubleSpinBox(layoutWidget);
         minHeightWidthRat->setObjectName(QStringLiteral("minHeightWidthRat"));
         minHeightWidthRat->setMaximum(1000);
 
@@ -359,16 +353,19 @@ public:
         horizontalLayout_10 = new QHBoxLayout();
         horizontalLayout_10->setSpacing(6);
         horizontalLayout_10->setObjectName(QStringLiteral("horizontalLayout_10"));
-        label_3 = new QLabel(widget);
+        label_3 = new QLabel(layoutWidget);
         label_3->setObjectName(QStringLiteral("label_3"));
 
         horizontalLayout_10->addWidget(label_3);
 
-        maxWidthRat = new QDoubleSpinBox(widget);
-        maxWidthRat->setObjectName(QStringLiteral("maxWidthRat"));
-        maxWidthRat->setMaximum(1000);
+        inRangePercent = new QDoubleSpinBox(layoutWidget);
+        inRangePercent->setObjectName(QStringLiteral("inRangePercent"));
+        inRangePercent->setMinimum(0.7);
+        inRangePercent->setMaximum(1);
+        inRangePercent->setSingleStep(0.3);
+        inRangePercent->setValue(0.86);
 
-        horizontalLayout_10->addWidget(maxWidthRat);
+        horizontalLayout_10->addWidget(inRangePercent);
 
 
         verticalLayout_3->addLayout(horizontalLayout_10);
@@ -376,16 +373,18 @@ public:
         horizontalLayout_11 = new QHBoxLayout();
         horizontalLayout_11->setSpacing(6);
         horizontalLayout_11->setObjectName(QStringLiteral("horizontalLayout_11"));
-        label_4 = new QLabel(widget);
+        label_4 = new QLabel(layoutWidget);
         label_4->setObjectName(QStringLiteral("label_4"));
 
         horizontalLayout_11->addWidget(label_4);
 
-        maxHeightRat = new QDoubleSpinBox(widget);
-        maxHeightRat->setObjectName(QStringLiteral("maxHeightRat"));
-        maxHeightRat->setMaximum(1000);
+        outRangePercent = new QDoubleSpinBox(layoutWidget);
+        outRangePercent->setObjectName(QStringLiteral("outRangePercent"));
+        outRangePercent->setMaximum(0.15);
+        outRangePercent->setSingleStep(0.005);
+        outRangePercent->setValue(0.05);
 
-        horizontalLayout_11->addWidget(maxHeightRat);
+        horizontalLayout_11->addWidget(outRangePercent);
 
 
         verticalLayout_3->addLayout(horizontalLayout_11);
@@ -393,53 +392,20 @@ public:
         horizontalLayout_12 = new QHBoxLayout();
         horizontalLayout_12->setSpacing(6);
         horizontalLayout_12->setObjectName(QStringLiteral("horizontalLayout_12"));
-        label_5 = new QLabel(widget);
+        label_5 = new QLabel(layoutWidget);
         label_5->setObjectName(QStringLiteral("label_5"));
 
         horizontalLayout_12->addWidget(label_5);
 
-        maxAngleDiff = new QDoubleSpinBox(widget);
-        maxAngleDiff->setObjectName(QStringLiteral("maxAngleDiff"));
-        maxAngleDiff->setMaximum(1000);
+        armourPixelAvg = new QDoubleSpinBox(layoutWidget);
+        armourPixelAvg->setObjectName(QStringLiteral("armourPixelAvg"));
+        armourPixelAvg->setMaximum(100);
+        armourPixelAvg->setValue(60);
 
-        horizontalLayout_12->addWidget(maxAngleDiff);
+        horizontalLayout_12->addWidget(armourPixelAvg);
 
 
         verticalLayout_3->addLayout(horizontalLayout_12);
-
-        horizontalLayout_13 = new QHBoxLayout();
-        horizontalLayout_13->setSpacing(6);
-        horizontalLayout_13->setObjectName(QStringLiteral("horizontalLayout_13"));
-        label_6 = new QLabel(widget);
-        label_6->setObjectName(QStringLiteral("label_6"));
-
-        horizontalLayout_13->addWidget(label_6);
-
-        maxHeightGapRat = new QDoubleSpinBox(widget);
-        maxHeightGapRat->setObjectName(QStringLiteral("maxHeightGapRat"));
-        maxHeightGapRat->setMaximum(1000);
-
-        horizontalLayout_13->addWidget(maxHeightGapRat);
-
-
-        verticalLayout_3->addLayout(horizontalLayout_13);
-
-        horizontalLayout_14 = new QHBoxLayout();
-        horizontalLayout_14->setSpacing(6);
-        horizontalLayout_14->setObjectName(QStringLiteral("horizontalLayout_14"));
-        label_7 = new QLabel(widget);
-        label_7->setObjectName(QStringLiteral("label_7"));
-
-        horizontalLayout_14->addWidget(label_7);
-
-        minHeightGapRat = new QDoubleSpinBox(widget);
-        minHeightGapRat->setObjectName(QStringLiteral("minHeightGapRat"));
-        minHeightGapRat->setMaximum(1000);
-
-        horizontalLayout_14->addWidget(minHeightGapRat);
-
-
-        verticalLayout_3->addLayout(horizontalLayout_14);
 
 
         horizontalLayout_17->addLayout(verticalLayout_3);
@@ -450,7 +416,7 @@ public:
         MainWindow->setCentralWidget(centralWidget);
         menuBar = new QMenuBar(MainWindow);
         menuBar->setObjectName(QStringLiteral("menuBar"));
-        menuBar->setGeometry(QRect(0, 0, 621, 26));
+        menuBar->setGeometry(QRect(0, 0, 621, 17));
         MainWindow->setMenuBar(menuBar);
         mainToolBar = new QToolBar(MainWindow);
         mainToolBar->setObjectName(QStringLiteral("mainToolBar"));
@@ -484,11 +450,9 @@ public:
         label_2->setText(QApplication::translate("MainWindow", "\346\234\200\345\260\217\351\235\242\347\247\257\351\231\220\345\210\266", Q_NULLPTR));
         label_8->setText(QApplication::translate("MainWindow", "\346\234\200\345\244\247\351\253\230\345\256\275\346\257\224", Q_NULLPTR));
         label_9->setText(QApplication::translate("MainWindow", "\346\234\200\345\260\217\351\253\230\345\256\275\346\257\224", Q_NULLPTR));
-        label_3->setText(QApplication::translate("MainWindow", "\346\234\200\345\244\247\345\256\275\345\272\246\346\257\224\345\200\274", Q_NULLPTR));
-        label_4->setText(QApplication::translate("MainWindow", "\346\234\200\345\244\247\351\253\230\345\272\246\346\257\224\345\200\274", Q_NULLPTR));
-        label_5->setText(QApplication::translate("MainWindow", "\346\234\200\345\244\247\350\247\222\345\272\246\345\267\256", Q_NULLPTR));
-        label_6->setText(QApplication::translate("MainWindow", "\346\234\200\345\244\247\351\253\230\345\272\246\351\227\264\350\267\235\346\257\224", Q_NULLPTR));
-        label_7->setText(QApplication::translate("MainWindow", "\346\234\200\345\260\217\351\253\230\345\272\246\351\227\264\350\267\235\346\257\224", Q_NULLPTR));
+        label_3->setText(QApplication::translate("MainWindow", "\345\214\272\351\227\264\345\206\205\345\203\217\347\264\240\346\257\224", Q_NULLPTR));
+        label_4->setText(QApplication::translate("MainWindow", "\345\214\272\351\227\264\345\244\226\345\203\217\347\264\240\346\257\224", Q_NULLPTR));
+        label_5->setText(QApplication::translate("MainWindow", "\347\224\262\346\235\277\345\203\217\347\264\240\345\235\207\345\200\274", Q_NULLPTR));
     } // retranslateUi
 
 };

@@ -131,7 +131,7 @@ void ImagePreprocessor::threshProcess(Mat &framethreshold,Mat &Hue,Mat &Staturat
                                 uchar*framethresholdData = framethreshold.ptr<uchar>(i);
                                 for (int j = boundRect[a].x;j < boundRect[a].x + boundRect[a].width;j++)
                                 {
-                                    if (tmph3data[j] = 255)
+                                    if (tmph3data[j] == 255)
                                         framethresholdData[j] = 255;
                                 }
                             }
@@ -142,7 +142,7 @@ void ImagePreprocessor::threshProcess(Mat &framethreshold,Mat &Hue,Mat &Staturat
                                 uchar*framethresholdData = framethreshold.ptr<uchar>(i);
                                 for (int j = boundRect[b].x;j < boundRect[b].x + boundRect[b].width;j++)
                                 {
-                                    if (tmph3data[j] = 255)
+                                    if (tmph3data[j] == 255)
                                         framethresholdData[j] = 255;
                                 }
                             }

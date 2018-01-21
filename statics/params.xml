@@ -8,11 +8,10 @@
         <minArea> 0 </minArea>
         <maxHeightWidthRat> 15 </maxHeightWidthRat>
         <minHeightWidthRat> 1 </minHeightWidthRat>
-        <maxWidthRat> 8 </maxWidthRat>
-        <maxHeightRat> 4 </maxHeightRat>
-        <maxAngleDiff> 15 </maxAngleDiff>
-        <maxHeightGapRat> 6 </maxHeightGapRat>
-        <minHeightGapRat> 2 </minHeightGapRat>
+
+        <inRangePercent> 0.86 </inRangePercent>
+        <outRangePercent> 0.05 </outRangePercent>
+        <armourPixelAvg> 60 </armourPixelAvg>
     </armour_detector>
 
     <!--图像hsv三通道阈值参数-->
