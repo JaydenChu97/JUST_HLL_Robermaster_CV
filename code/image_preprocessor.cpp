@@ -162,6 +162,7 @@ void ImagePreprocessor::threshProcess(Mat& framethreshold,
             }
         }
     }
+
 imshow("framethreshold", framethreshold);
 }
 

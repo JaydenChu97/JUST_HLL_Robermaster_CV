@@ -257,7 +257,7 @@ vector<RotatedRect> ArmourDetector::extracArmourBlocks(const vector<RotatedRect>
 
                         if(initArmourBlocks.size() != 0)
                         {
-                            for(int k=0; k<initArmourBlocks.size(); k++)
+                            for(int k=0; k < initArmourBlocks.size(); k++)
                             {
                                 armourBlocks.push_back(initArmourBlocks[k]);
                                 initArmourBlocks.clear();
@@ -314,7 +314,7 @@ void ArmourDetector::calcDeviation(vector<RotatedRect> initLightBlocks,
             {
                 uchar *graydata = gray.ptr<uchar>(i);//灰度图像素
                 uchar*framethresholdData = framethreshold.ptr<uchar>(i);//二值化图像素
-                for (int j = left; j < right; j++)
+                for (int j = left; j < right; j++)           
                 {
                     if (framethresholdData[j] == 0)//非灯条像素
                     {
@@ -330,7 +330,7 @@ void ArmourDetector::calcDeviation(vector<RotatedRect> initLightBlocks,
              for (int i = top; i < bottom; i++)
              {
                  uchar* grayData = gray.ptr<uchar>(i);
-                 uchar*framethresholdData = framethreshold.ptr<uchar>(i);//二值化图像素
+                 uchar* framethresholdData = framethreshold.ptr<uchar>(i);//二值化图像素
                  for (int j = left; j < right; j++)
                  {
                      if (framethresholdData[j] == 0)
@@ -381,7 +381,7 @@ vector<RotatedRect> ArmourDetector::domainCountDetect(const vector<RotatedRect> 
             double top = min(min(min(b1, b2), b3), b4) - 1;//上边界
             double bottom = max(max(max(b1, b2), b3), b4) + 1;//下边界
 
-            int labelvalue[1] = {0};
+            int labelvalue[1] = {0};           
             Point seed, neighbor;
             int rows = bottom;
             int cols = right;
@@ -433,6 +433,7 @@ vector<RotatedRect> ArmourDetector::domainCountDetect(const vector<RotatedRect> 
                                 pointStack.push(neighbor);
                             }
                             seed = pointStack.top();
+                          
                             //  获取堆栈上的顶部像素并将其标记为相同的标签
                             pointStack.pop();//弹出栈顶像素
                         }
@@ -518,12 +519,14 @@ void ArmourDetector::markArmourBlocks(const Mat& srcImage,
 
         Scalar armourBlockinRangePercent, armourBlockStdDev;
         meanStdDev(srcImage, armourBlockinRangePercent, armourBlockStdDev, mask);
+
         double grade = sqrt((pow(armourBlockinRangePercent[0], 2)
                      + pow(armourBlockinRangePercent[1], 2)
                      + pow(armourBlockinRangePercent[2], 2))/3.0)
                      + 5 * sqrt((pow(armourBlockStdDev[0], 2)
                      + pow(armourBlockStdDev[1], 2)
                      + pow(armourBlockStdDev[2], 2))/3.0);
+      
         imshow("mask", mask);
 
         optimalArmourBlocks.push_back(OptimalArmourBlock(armourBlocks[id], grade));
