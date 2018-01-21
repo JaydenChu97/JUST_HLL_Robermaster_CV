@@ -75,7 +75,7 @@ Mat ImagePreprocessor::preprocess(const Mat& srcImage)
 
 void ImagePreprocessor::threshProcess(Mat &framethreshold,Mat &Hue,Mat &Staturation,Mat &Value)
 {
-    vector<vector<Point> > contours;//定义一个返回轮廓的容器
+    vector< vector<Point> > contours;//定义一个返回轮廓的容器
     findContours(Value, contours, CV_RETR_EXTERNAL, CV_CHAIN_APPROX_NONE);//查找轮廓，只检索最外面的轮廓，将所有的连码点转换成点
     vector<Rect> boundRect(contours.size());//画矩形
     Point*center;//声明点
@@ -83,7 +83,7 @@ void ImagePreprocessor::threshProcess(Mat &framethreshold,Mat &Hue,Mat &Staturat
     Rect box;    
 
     //框定待检测区域
-    for(int a=0;a<contours.size();a++)
+    for(int a=0;a<contours.size()-1;a++)
     {
         boundRect[a] = boundingRect(contours[a]);
         for (int b = a+1;b<contours.size();b++)
@@ -105,7 +105,7 @@ void ImagePreprocessor::threshProcess(Mat &framethreshold,Mat &Hue,Mat &Staturat
             center[b].y = boundRect[b].y + boundRect[b].height / 2;
 
             //颜色检测与饱和度检测，查找框定矩形中间是否存在所需颜色与饱和度像素
-            if (abs(center[b].y - center[a].y) < abs(center[b].x - center[a].x)*0.5)//夹角
+            if (abs(center[b].y - center[a].y) < abs(center[b].x - center[a].x)*0.8)//夹角
             {
                 for(int i=top;i<bottom;i++)
                 {
@@ -122,7 +122,7 @@ void ImagePreprocessor::threshProcess(Mat &framethreshold,Mat &Hue,Mat &Staturat
                 //进行二值图的绘制，如存在上述像素，则根据亮度图进行绘制
                 if(redpixel[0]>0&&dark[0]>0)
                 {
-                    if(boundRect[a].height>boundRect[a].width&&boundRect[b].height>boundRect[b].width)
+                    if(boundRect[a].height>0.5*boundRect[a].width&&boundRect[b].height>0.5*boundRect[b].width)
                     {
 
                             for (int i = boundRect[a].y;i < boundRect[a].y + boundRect[a].height;i++)
@@ -131,7 +131,7 @@ void ImagePreprocessor::threshProcess(Mat &framethreshold,Mat &Hue,Mat &Staturat
                                 uchar*framethresholdData = framethreshold.ptr<uchar>(i);
                                 for (int j = boundRect[a].x;j < boundRect[a].x + boundRect[a].width;j++)
                                 {
-                                    if (tmph3data[j] = 255)
+                                    if (tmph3data[j] == 255)
                                         framethresholdData[j] = 255;
                                 }
                             }
@@ -142,7 +142,7 @@ void ImagePreprocessor::threshProcess(Mat &framethreshold,Mat &Hue,Mat &Staturat
                                 uchar*framethresholdData = framethreshold.ptr<uchar>(i);
                                 for (int j = boundRect[b].x;j < boundRect[b].x + boundRect[b].width;j++)
                                 {
-                                    if (tmph3data[j] = 255)
+                                    if (tmph3data[j] == 255)
                                         framethresholdData[j] = 255;
                                 }
                             }
@@ -150,13 +150,14 @@ void ImagePreprocessor::threshProcess(Mat &framethreshold,Mat &Hue,Mat &Staturat
                 }
             }
         }
-    }    
+    }
+imshow("framethreshold",framethreshold);
 }
 
 void ImagePreprocessor::wipePoints(Mat &framethreshold,Mat &hue,Mat &saturation)
-{
+{    
     //对已经绘制好的灰度图进行除噪，通过轮廓上点是否存在所需颜色与饱和度像素，轮廓面积进行去噪
-    vector<vector<Point>>contours;
+    vector< vector<Point> >contours;
     findContours(framethreshold,contours,CV_RETR_EXTERNAL,CV_CHAIN_APPROX_NONE);
     vector<Rect> boundRect(contours.size());
     for(int a=0;a<contours.size();a++)

@@ -27,6 +27,9 @@
 #ifndef ARMOUR_DETECTOR_H
 #define ARMOUR_DETECTOR_H
 
+/*C++标准库*/
+#include <stack>
+
 #include "image_preprocessor.h"
 
 namespace HCVC {
@@ -70,7 +73,9 @@ public:
     * @param[in] color 线条颜色
     * @return null
     */
-    void drawBlocks(Mat srcImage, const vector<RotatedRect>& minRotatedRects, const Scalar& color) const;
+    void drawBlocks(Mat srcImage,
+                    const vector<RotatedRect>& minRotatedRects,
+                    const Scalar& color) const;
 
     //! 装甲板判定参数
     struct Params
@@ -80,11 +85,9 @@ public:
         float maxHeightWidthRat;   /*!< 单团块检测，最大高宽比 */
         float minHeightWidthRat;   /*!< 单团块检测，最小高宽比 */
 
-        float maxWidthRat;         /*!< 团块对匹配，最大宽度差 */
-        float maxHeightRat;        /*!< 团块对匹配，最大高度差 */
-        float maxAngleDiff;        /*!< 团块对匹配，最大角度差(暂时没有使用，效果不明显) */
-        float maxHeightGapRat;     /*!< 团块对匹配，最大高度间距比 */
-        float minHeightGapRat;     /*!< 团块对匹配，最小高度间距比 */
+        float inRangePercent;      /*!< 甲板像素检测，区间范围内像素比例 */
+        float outRangePercent;     /*!< 甲板像素检测，区间范围外像素比例 */
+        float armourPixelAvg;      /*!< 甲板像素检测，甲板像素平均值 */
     }params;
 
 private:
@@ -129,7 +132,9 @@ private:
     * @param[in] col 连通块第一个点的横坐标
     * @return null
     */
-    void fillLampBlock(Mat& srcImage, vector<vector<Point> >& blocks, int row, int col);
+    void fillLampBlock(Mat& srcImage,
+                       vector<vector<Point> >& blocks,
+                       int row, int col);
 
     /**
     * @brief 计算每一个团块的信息，并进行初步的筛选即去除掉一些不符合条件的团块
@@ -139,33 +144,45 @@ private:
     vector<RotatedRect> calcBlocksInfo(const vector<vector<Point> >& blocks);
 
     /**
-    * @brief 进一步筛选，匹配团块即灯柱对，提取出最优目标
-    * @details 通过初步筛选，甲板像素离散检测，框定区域内连通域数量检测确定甲板
-    * @param[in] minRotatedRects 包围团块的最小旋转矩形数组
+    * @brief 进一步筛选，多个灯柱与甲板进行处理
+    * @details 通过初步筛选，运用两个灯柱的信息计算甲板像素离散程度，
+    *          并计算两灯柱框定区域内连通域数量以检测确定甲板
+    * @details 分为两灯柱初步信息检测，甲板像素离散度检测与灯柱减连通域数量检测
+    * @param[in] 通过单个灯柱信息筛选所确立的灯柱团块
+    * @param[in] armourBlocks 最终筛选出的包围甲板的最小旋转矩形数组
     * @return 包围灯柱对即装甲板区域的最小旋转矩形数组
     */
-    vector<RotatedRect> extracArmourBlocks(const vector<RotatedRect>& lampBlocks,const Mat srcImage,const Mat dstImage);
-
-    /**
-     * @brief 建立检测所需要的包含两灯柱的掩码
-     * @param[in] initPoints 通过初步筛选两灯柱的最小外接矩形的角
-     * @return null
-     */
-    void estableMask(Mat mask,const Mat& dstImage,const vector<Point> initPoints);
+    vector<RotatedRect> extracArmourBlocks(const vector<RotatedRect>& lampBlocks,
+                                           const Mat srcImage,
+                                           const Mat dstImage);
 
     /**
      * @brief 根据灰度图计算甲板的区间范围的值
      * @details 计算甲板像素平均值左右与大于某区间的像素比例
-     * @param[in] mask 建立的掩码
+     * @param[in] initLightBlocks 通过两灯柱初步信息检测所筛选出来的灯柱块
      * @param[in] srcImage 原图像
-     * @param[in] avg 像素的平均值
-     * @param[in] mean 区间范围内像素的平均值
-     * @param[in] percent 区间范围外像素的平均值
+     * @param[in] armourPixelAvg 像素的平均值
+     * @param[in] inRangePercent 设定区间范围内像素的平均值
+     * @param[in] outRangePercent 设定区间范围外像素的平均值
      * @return null
      */
-    void calcDeviation(const Mat& mask, const Mat& srcImage, double& avg, double& mean, double&percent);
+    void calcDeviation(vector<RotatedRect> initLightBlocks,
+                       const Mat& srcImage, const Mat& dstImage,
+                       double& armourPixelAvg, double& inRangePercent,
+                       double& outRangePercent);
 
-    //void domainCountDetect(int& labelvalue[1],const vector<RotatedRect> &initArmourBlocks);
+    /**
+     * @brief 连通域数量检测
+     * @details 求两灯柱外接矩形，检测矩形内的连通域，若连通域数量为2，
+     *          对此两灯柱块确定最小外接矩形并返回该灯柱团块
+     * @param[in] allInitLightBlocks 初步筛选一帧总的灯柱矩形
+     * @param[in] initLightBlocks 通过两灯柱初步信息检测所筛选出来的灯柱块
+     * @param[in] finalLightBlocks 连通域数量检测后符合条件的矩形
+     * @return 最后筛选出的甲板外接矩形
+     */    
+    vector<RotatedRect> domainCountDetect(const vector<RotatedRect>& initLightBlocks,
+                                          vector<RotatedRect>& finalLightBlocks,
+                                          const Mat& dstImage);
 
     /**
     * @brief 对最后提取出的灯柱区域评分，选出最优区域
@@ -174,7 +191,9 @@ private:
     * @param[in] armourBlocks 包围装甲板区域的最小旋转矩形数组
     * @return null
     */
-    void markArmourBlocks(const Mat& srcImage, const Mat& dstImage, const vector<RotatedRect>& armourBlocks);
+    void markArmourBlocks(const Mat& srcImage,
+                          const Mat& dstImage,
+                          const vector<RotatedRect>& armourBlocks);
 
     /**
     * @brief 减去旋转矩形的边角，使旋转矩形的左右两条边与竖直方向平行，成为平行四边形

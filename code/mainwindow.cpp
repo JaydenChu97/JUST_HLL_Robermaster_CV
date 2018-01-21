@@ -27,11 +27,10 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->minArea->setValue(static_cast<double>(armourDetector.params.minArea));
     ui->maxHeightWidthRat->setValue(static_cast<double>(armourDetector.params.maxHeightWidthRat));
     ui->minHeightWidthRat->setValue(static_cast<double>(armourDetector.params.minHeightWidthRat));
-    ui->maxWidthRat->setValue(static_cast<double>(armourDetector.params.maxWidthRat));
-    ui->maxHeightRat->setValue(static_cast<double>(armourDetector.params.maxHeightRat));
-    ui->maxAngleDiff->setValue(static_cast<double>(armourDetector.params.maxAngleDiff));
-    ui->maxHeightGapRat->setValue(static_cast<double>(armourDetector.params.maxHeightGapRat));
-    ui->minHeightGapRat->setValue(static_cast<double>(armourDetector.params.minHeightGapRat));
+    ui->inRangePercent->setValue(static_cast<double>(armourDetector.params.inRangePercent));
+    ui->outRangePercent->setValue(static_cast<double>(armourDetector.params.outRangePercent));
+    ui->armourPixelAvg->setValue(static_cast<double>(armourDetector.params.armourPixelAvg));
+
 }
 
 MainWindow::~MainWindow()
@@ -102,27 +101,17 @@ void MainWindow::on_minHeightWidthRat_valueChanged(double arg1)
     armourDetector.params.minHeightWidthRat = static_cast<float>(arg1);
 }
 
-void MainWindow::on_maxWidthRat_valueChanged(double arg1)
+void MainWindow::on_inRangePercent_valueChanged(double arg1)
 {
-    armourDetector.params.maxWidthRat = static_cast<float>(arg1);
+    armourDetector.params.inRangePercent = static_cast<float>(arg1);
 }
 
-void MainWindow::on_maxHeightRat_valueChanged(double arg1)
+void MainWindow::on_outRangePercent_valueChanged(double arg1)
 {
-    armourDetector.params.maxHeightRat = static_cast<float>(arg1);
+    armourDetector.params.outRangePercent = static_cast<float>(arg1);
 }
 
-void MainWindow::on_maxAngleDiff_valueChanged(double arg1)
+void MainWindow::on_armourPixelAvg_valueChanged(double arg1)
 {
-    armourDetector.params.maxAngleDiff = static_cast<float>(arg1);
-}
-
-void MainWindow::on_maxHeightGapRat_valueChanged(double arg1)
-{
-    armourDetector.params.maxHeightGapRat = static_cast<float>(arg1);
-}
-
-void MainWindow::on_minHeightGapRat_valueChanged(double arg1)
-{
-    armourDetector.params.minHeightGapRat = static_cast<float>(arg1);
+    armourDetector.params.armourPixelAvg = static_cast<float>(arg1);
 }

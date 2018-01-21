@@ -44,10 +44,10 @@ SOURCES += \
     code/armour_detector.cpp \
     code/armour_tracker.cpp \
     code/image_preprocessor.cpp \
-    code/main.cpp \
     code/main_control.cpp \
     code/mainwindow.cpp \
-    code/tool.cpp
+    code/tool.cpp \
+    code/main.cpp
 
 DISTFILES += \
     statics/params.xml

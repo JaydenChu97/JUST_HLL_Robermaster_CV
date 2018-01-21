@@ -67,15 +67,25 @@ public:
     *         返回true，表示文件读取成功；
     *         返回false，表示文件读取失败
     */
-    bool readSrcFile(const string& path);
+    bool readSrcFile(string path);
+
+    /**
+    * @overload
+    * @brief 设置源文件读取路径
+    * @details 从指定路径读取视频文件
+    * @param[in] path 读取源文件的路径
+    * @return 文件是否读取成功。
+    *         返回true，表示文件读取成功；
+    *         返回false，表示文件读取失败
+    */
+    bool readSrcFile(int path);
 
     /**
     * @brief 运行整体系统并显示运行结果
-    *
     * @param[in] path 读取源文件的路径
     * @return null
     */
-    void run(const string &path);
+    void run(const string& path);
 
 protected:
     //! 图像检测器，处理并分析图像找出装甲的初始位置
