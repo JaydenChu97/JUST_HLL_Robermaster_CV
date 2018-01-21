@@ -20,7 +20,7 @@
    <property name="mouseTracking">
     <bool>false</bool>
    </property>
-   <widget class="QWidget" name="">
+   <widget class="QWidget" name="layoutWidget">
     <property name="geometry">
      <rect>
       <x>20</x>
@@ -322,14 +322,23 @@
            <item>
             <widget class="QLabel" name="label_3">
              <property name="text">
-              <string>最大宽度比值</string>
+              <string>区间内像素比</string>
              </property>
             </widget>
            </item>
            <item>
-            <widget class="QDoubleSpinBox" name="maxWidthRat">
+            <widget class="QDoubleSpinBox" name="inRangePercent">
+             <property name="minimum">
+              <double>0.700000000000000</double>
+             </property>
              <property name="maximum">
-              <double>1000.000000000000000</double>
+              <double>1.000000000000000</double>
+             </property>
+             <property name="singleStep">
+              <double>0.300000000000000</double>
+             </property>
+             <property name="value">
+              <double>0.860000000000000</double>
              </property>
             </widget>
            </item>
@@ -340,14 +349,20 @@
            <item>
             <widget class="QLabel" name="label_4">
              <property name="text">
-              <string>最大高度比值</string>
+              <string>区间外像素比</string>
              </property>
             </widget>
            </item>
            <item>
-            <widget class="QDoubleSpinBox" name="maxHeightRat">
+            <widget class="QDoubleSpinBox" name="outRangePercent">
              <property name="maximum">
-              <double>1000.000000000000000</double>
+              <double>0.150000000000000</double>
+             </property>
+             <property name="singleStep">
+              <double>0.005000000000000</double>
+             </property>
+             <property name="value">
+              <double>0.050000000000000</double>
              </property>
             </widget>
            </item>
@@ -358,50 +373,17 @@
            <item>
             <widget class="QLabel" name="label_5">
              <property name="text">
-              <string>最大角度差</string>
+              <string>甲板像素均值</string>
              </property>
             </widget>
            </item>
            <item>
-            <widget class="QDoubleSpinBox" name="maxAngleDiff">
+            <widget class="QDoubleSpinBox" name="armourPixelAvg">
              <property name="maximum">
-              <double>1000.000000000000000</double>
+              <double>100.000000000000000</double>
              </property>
-            </widget>
-           </item>
-          </layout>
-         </item>
-         <item>
-          <layout class="QHBoxLayout" name="horizontalLayout_13">
-           <item>
-            <widget class="QLabel" name="label_6">
-             <property name="text">
-              <string>最大高度间距比</string>
-             </property>
-            </widget>
-           </item>
-           <item>
-            <widget class="QDoubleSpinBox" name="maxHeightGapRat">
-             <property name="maximum">
-              <double>1000.000000000000000</double>
-             </property>
-            </widget>
-           </item>
-          </layout>
-         </item>
-         <item>
-          <layout class="QHBoxLayout" name="horizontalLayout_14">
-           <item>
-            <widget class="QLabel" name="label_7">
-             <property name="text">
-              <string>最小高度间距比</string>
-             </property>
-            </widget>
-           </item>
-           <item>
-            <widget class="QDoubleSpinBox" name="minHeightGapRat">
-             <property name="maximum">
-              <double>1000.000000000000000</double>
+             <property name="value">
+              <double>60.000000000000000</double>
              </property>
             </widget>
            </item>
@@ -420,7 +402,7 @@
      <x>0</x>
      <y>0</y>
      <width>621</width>
-     <height>26</height>
+     <height>17</height>
     </rect>
    </property>
   </widget>
