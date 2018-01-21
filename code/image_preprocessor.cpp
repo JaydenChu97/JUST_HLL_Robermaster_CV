@@ -105,7 +105,7 @@ void ImagePreprocessor::threshProcess(Mat &framethreshold,Mat &Hue,Mat &Staturat
             center[b].y = boundRect[b].y + boundRect[b].height / 2;
 
             //颜色检测与饱和度检测，查找框定矩形中间是否存在所需颜色与饱和度像素
-            if (abs(center[b].y - center[a].y) < abs(center[b].x - center[a].x)*0.5)//夹角
+            if (abs(center[b].y - center[a].y) < abs(center[b].x - center[a].x)*0.8)//夹角
             {
                 for(int i=top;i<bottom;i++)
                 {

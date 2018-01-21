@@ -30,7 +30,7 @@ void MainControl::run(const string& path)
     //读取源文件
     if(path == "camera")
     {
-        readSrcFile(1);
+        readSrcFile(0);
     }
     else
     {
