@@ -38,7 +38,8 @@ HEADERS += \
     code/image_preprocessor.h \
     code/main_control.h \
     code/mainwindow.h \
-    code/tool.h
+    code/tool.h \
+    code/serial.h
 
 SOURCES += \
     code/armour_detector.cpp \
@@ -47,7 +48,8 @@ SOURCES += \
     code/main_control.cpp \
     code/mainwindow.cpp \
     code/tool.cpp \
-    code/main.cpp
+    code/main.cpp \
+    code/serial.cpp
 
 DISTFILES += \
     statics/params.xml
