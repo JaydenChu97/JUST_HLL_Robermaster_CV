@@ -3,8 +3,8 @@
 # Project created by QtCreator 2017-11-24T21:43:33
 #
 #-------------------------------------------------
-
-QT       += core gui
+QT += serialport
+QT += core gui
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
