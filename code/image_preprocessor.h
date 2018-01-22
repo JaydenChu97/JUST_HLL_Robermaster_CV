@@ -27,7 +27,7 @@
 #ifndef IMAGE_PREPROCESSOR_H
 #define IMAGE_PREPROCESSOR_H
 /*qt库*/
-#include <qDebug>
+#include <QDebug>
 
 /*C++标准库*/
 #include <algorithm>
