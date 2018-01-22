@@ -110,9 +110,8 @@ void ArmourDetector::fillLampBlock(Mat& srcImage,
 
     //qDebug() << col << '\t' << row << endl;
     //bug
-
     blocks.back().push_back(Point(col, row));
-/*
+
     qDebug() << blocks.back().size() << endl;
     long long count = 0;
     for(vector<vector<Point> >::iterator it = blocks.begin(); it != blocks.end(); it++)
@@ -120,7 +119,6 @@ void ArmourDetector::fillLampBlock(Mat& srcImage,
         count += it->size();
     }
     qDebug() << "total: " << count << endl;
-*/
 
     //避免已访问像素的重复访问，将其置零
     srcImage.at<uchar>(row, col) = 0;
@@ -164,7 +162,7 @@ vector<vector<Point> > ArmourDetector::searchBlocks(Mat srcImage)
             if(*srcImagePtr++)
             {
                 //根据找到的起点，递归遍历所有它的相邻像素
-                 blocks.push_back(vector<Point>());
+                blocks.push_back(vector<Point>());
                 //由于存在两种不同的访问方式，需要进行坐标转换
                 if(row == 0)
                 {
@@ -208,6 +206,7 @@ vector<RotatedRect> ArmourDetector::extracArmourBlocks(const vector<RotatedRect>
                                                        const Mat dstImage)
 {    
     vector<RotatedRect> armourBlocks;
+    vector<RotatedRect> allInitLightBlocks;
 
     //非空判定，如果为空的话在下面遍历的时候会出现一个bug，i-1溢出成2^32-1，使循环卡死
     if(lampBlocks.empty())
@@ -222,10 +221,8 @@ vector<RotatedRect> ArmourDetector::extracArmourBlocks(const vector<RotatedRect>
             if(abs(lampBlocks[i].center.y - lampBlocks[j].center.y) <
                     0.5*abs(lampBlocks[i].center.x-lampBlocks[j].center.x))
             {
-                if((lampBlocks[i].boundingRect2f().area()
-                    > 0.2*lampBlocks[j].boundingRect2f().area())
-                        &&(lampBlocks[j].boundingRect2f().area()
-                           > 0.2*lampBlocks[i].boundingRect2f().area()))
+                if((lampBlocks[i].boundingRect2f().area() > 0.2*lampBlocks[j].boundingRect2f().area())
+                        &&(lampBlocks[j].boundingRect2f().area() > 0.2*lampBlocks[i].boundingRect2f().area()))
                 {                                                    
                     vector<RotatedRect> initLightBlocks;
                     initLightBlocks.push_back(lampBlocks[i]);
@@ -249,6 +246,9 @@ vector<RotatedRect> ArmourDetector::extracArmourBlocks(const vector<RotatedRect>
                           <<"armourPixelAvg:"<<armourPixelAvg<<endl;
 
                         vector<RotatedRect> finalLightBlocks;
+
+                        allInitLightBlocks.push_back(lampBlocks[i]);
+                        allInitLightBlocks.push_back(lampBlocks[j]);
 
                         //外接正矩形连通域数量检测                        
                         vector<RotatedRect>initArmourBlocks = domainCountDetect(initLightBlocks,
@@ -286,7 +286,7 @@ void ArmourDetector::calcDeviation(vector<RotatedRect> initLightBlocks,
 
     double sum=0;//像素值的总和
     double armourPixelCount[1] = { 0 };//甲板像素数量
-    double armourRangPixel[1] = { 0 };//所需区间内像素
+    double armourRangPixel[1] = {0};//所需区间内像素
     double notArmourRangPixel[1] = { 0 };//远离甲板平均值像素
     armourPixelAvg = 0;//像素的平均值
     inRangePercent = 0;//区间范围内像素所占比例
@@ -312,13 +312,13 @@ void ArmourDetector::calcDeviation(vector<RotatedRect> initLightBlocks,
 
             for (int i = top; i < bottom; i++)
             {
-                uchar* grayData = gray.ptr<uchar>(i);//灰度图像素
-                uchar* framethresholdData = framethreshold.ptr<uchar>(i);//二值化图像素
-                for (int j = left; j < right; j++)
+                uchar *graydata = gray.ptr<uchar>(i);//灰度图像素
+                uchar*framethresholdData = framethreshold.ptr<uchar>(i);//二值化图像素
+                for (int j = left; j < right; j++)           
                 {
                     if (framethresholdData[j] == 0)//非灯条像素
                     {
-                        sum += grayData[j];
+                        sum += graydata[j];
                         armourPixelCount[0]++;
                     }
                 }

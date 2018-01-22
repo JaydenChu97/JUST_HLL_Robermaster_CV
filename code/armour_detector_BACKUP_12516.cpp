@@ -312,9 +312,15 @@ void ArmourDetector::calcDeviation(vector<RotatedRect> initLightBlocks,
 
             for (int i = top; i < bottom; i++)
             {
+<<<<<<< HEAD
                 uchar* grayData = gray.ptr<uchar>(i);//灰度图像素
                 uchar* framethresholdData = framethreshold.ptr<uchar>(i);//二值化图像素
                 for (int j = left; j < right; j++)
+=======
+                uchar *graydata = gray.ptr<uchar>(i);//灰度图像素
+                uchar*framethresholdData = framethreshold.ptr<uchar>(i);//二值化图像素
+                for (int j = left; j < right; j++)           
+>>>>>>> d9256b6db63feca495f2677e781edf622709aa56
                 {
                     if (framethresholdData[j] == 0)//非灯条像素
                     {

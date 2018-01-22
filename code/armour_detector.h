@@ -146,8 +146,8 @@ private:
     /**
     * @brief 进一步筛选，多个灯柱与甲板进行处理,最后存入armourBlocks
     * @details 分为两灯柱初步信息检测，甲板像素离散度检测与灯柱减连通域数量检测
-    * @details 运用两个灯柱的信息计算甲板像素离散程度，
-    * @details 计算两灯柱框定区域内连通域数量以检测确定甲板
+    *          运用两个灯柱的信息计算甲板像素离散程度，
+    *          计算两灯柱框定区域内连通域数量以检测确定甲板
     * @param[in] lampBlocks 通过单个灯柱信息筛选所确立的灯柱团块
     * @param[in] srcImage 原彩色图像
     * @param[in] dstImage 原二值化图像

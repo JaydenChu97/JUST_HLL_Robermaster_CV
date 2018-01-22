@@ -94,6 +94,7 @@ void ImagePreprocessor::threshProcess(Mat& framethreshold,
               top = boundRect[a].y - boundRect[a].height/2,
               bottom = boundRect[a].y + 2*boundRect[a].height/2;
 
+        //检测亮度通道团块在H与S通道周围像素情况，存在所设定阈值像素则判定为灯柱
         if(left > 0 && right < framethreshold.cols && top > 0 && bottom < framethreshold.rows)
         {
             for(int i = top; i < bottom; i++)
@@ -110,7 +111,7 @@ void ImagePreprocessor::threshProcess(Mat& framethreshold,
             }
         }
 
-        //进行二值图的绘制
+        //根据亮度图团块进行二值图的绘制
         if(huePixel > 0 && saturationPixel > 0)
         {
             for (int i = boundRect[a].y; i < boundRect[a].y + boundRect[a].height; i++)

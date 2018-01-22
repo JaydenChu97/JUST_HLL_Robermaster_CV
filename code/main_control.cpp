@@ -76,7 +76,7 @@ void MainControl::run(const string& path)
         {
             Rect2d armourBlock = armourDetector.getBestArmourBlock();
             armourTracker.init(resizeFrame, armourBlock);
-            //status = TRACKING;
+            status = TRACKING;
         }
 
         // 追踪装甲板区域

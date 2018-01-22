@@ -1,0 +1,12 @@
+INPUT(
+./debug\armour_detector.o
+./debug\armour_tracker.o
+./debug\image_preprocessor.o
+./debug\main_control.o
+./debug\mainwindow.o
+./debug\tool.o
+./debug\main.o
+./debug\serial.o
+./debug\moc_mainwindow.o
+./debug\moc_serial.o
+);
