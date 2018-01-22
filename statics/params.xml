@@ -10,7 +10,7 @@
         <minHeightWidthRat> 1 </minHeightWidthRat>
 
         <inRangePercent> 0.86 </inRangePercent>
-        <outRangePercent> 0.05 </outRangePercent>
+        <outRangePercent> 0.1 </outRangePercent>
         <armourPixelAvg> 60 </armourPixelAvg>
     </armour_detector>
 

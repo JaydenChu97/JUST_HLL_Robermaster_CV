@@ -73,16 +73,16 @@ public:
 
     /**
      * @brief 进行灯条的筛选，以V通道为主要通道，H与S通道为辅助通道构建二值化图
-     * @details 两两框定V通道团块，
-     *          若框定区域内存在设置的H与S通道阈值的点，
-     *          则以V通道为模板绘制二值化图
+     * @details 在V通道中寻找团块坐标，将此坐标在H于S通道中处理
+     * @details 根据团块周围是否存在H通道阈值像素区分敌我
+     * @details 根据团块周围是否存在S通道阈值像素去除背景
      * @param[in] framethreshold 储存二值化图像
-     * @param[in] Hue hue通道
-     * @param[in] Statulation saturation通道
-     * @param[in] Value value通道
+     * @param[in] hue hue通道
+     * @param[in] saturation saturation通道
+     * @param[in] value value通道
      * @return null
      */
-    void threshProcess(Mat& framethreshold,Mat& Hue,Mat& Staturation,Mat& Value);
+    void threshProcess(Mat& framethreshold,Mat& hue,Mat& saturation,Mat& value);
 
     /**
      * @brief 以H与S通道为辅助通道，轮廓面积对二值化图进行去噪处理
