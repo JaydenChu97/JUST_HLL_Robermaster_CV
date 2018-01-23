@@ -11,6 +11,25 @@ MainControl::MainControl()
     {
         qDebug() << "SerialPort init sucess!" << endl;
     }
+    
+    FileStorage fs("statics/params.xml", FileStorage::READ);
+    if(!fs.isOpened())
+    {
+        cout << "Open file failed" << endl;
+    }
+
+    FileNode node = fs["camera_parameter"];
+        
+    node["brightness"] >> params.brightness;
+    node["contrast"] >> params.contrast;
+    node["hue"] >> params.hue;
+    node["saturation"] >> params.saturation;
+    node["pan"] >> params.pan;
+    node["gamma"] >> params.gamma;
+    node["white_balance_red_v "] >> params.white_balance_red_v;
+    node["backlight"]>> params.backlight;
+    node["gain"] >> params.gain;
+    node["exposure"] >>params.exposure;
 }
 
 bool MainControl::readSrcFile(string path)
@@ -26,7 +45,17 @@ bool MainControl::readSrcFile(int cameraId)
     srcFilePath = string("cameraId:");
     srcFilePath.push_back('0'+cameraId);
     srcFile.open(cameraId);
-    srcFile.set(CAP_PROP_SETTINGS, -1);
+    srcFile.set(CAP_PROP_SETTINGS, -1);    
+    srcFile.set(CAP_PROP_BRIGHTNESS, params.brightness);
+    srcFile.set(CAP_PROP_CONTRAST, params.contrast);
+    srcFile.set(CAP_PROP_HUE, params.hue);
+    srcFile.set(CAP_PROP_SATURATION, params.saturation);
+    srcFile.set(CAP_PROP_PAN, params.pan);
+    srcFile.set(CAP_PROP_GAMMA, params.gamma);
+    srcFile.set(CAP_PROP_WHITE_BALANCE_RED_V, params.white_balance_red_v);
+    srcFile.set(CAP_PROP_BACKLIGHT, params.backlight);
+    srcFile.set(CAP_PROP_GAIN, params.gain);
+    srcFile.set(CAP_PROP_EXPOSURE, params.exposure);
 
     return srcFile.isOpened();
 }
@@ -79,24 +108,33 @@ void MainControl::run(const string& path)
 
         //检测到的装甲区域
         Rect2d armourBlock;
+        bool findArmourBlock = false;
 
         //检测图片中的灯柱位置
         if(status == DETECTING && armourDetector.detect(resizeFrame))
         {
             armourBlock = armourDetector.getBestArmourBlock();
             armourTracker.init(resizeFrame, armourBlock);
-            status = TRACKING;
+            //status = TRACKING;
+            findArmourBlock = true;
         }
 
         // 追踪装甲板区域
-        if(status == TRACKING && !armourTracker.track(resizeFrame))
+        if(status == TRACKING)
         {
-            armourBlock = armourTracker.getArmourBlock();
-            status = DETECTING;
+            if(armourTracker.track(resizeFrame))
+            {
+                armourBlock = armourTracker.getArmourBlock();
+                findArmourBlock = true;
+            }
+            else
+            {
+                status = DETECTING;
+            }
         }
 
         //向串口写入相对坐标
-        serial.writeBytes(armourBlock,resizeFrame);
+        serial.writeBytes(armourBlock, resizeFrame, findArmourBlock);
 
         //显示原图像(重调大小后)
         imshow(srcFilePath, resizeFrame);

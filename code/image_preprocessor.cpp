@@ -32,6 +32,7 @@ Mat ImagePreprocessor::preprocess(const Mat& srcImage)
     hsvImages[0] = rangeThreshold(hsvImages[0], 0);
     hsvImages[1] = rangeThreshold(hsvImages[1], 1);
     hsvImages[2] = rangeThreshold(hsvImages[2], 2);
+    imshow("h",hsvImages[0]);
 
     //获取自定义核，核边长只能为奇数
     //Mat erodeKernel = getStructuringElement(MORPH_RECT, Size(3, 3));
@@ -41,9 +42,10 @@ Mat ImagePreprocessor::preprocess(const Mat& srcImage)
     //开运算去除小的噪声点，闭运算连接断开部分，对H进行处理
     Mat hue, saturation, value;
     hsvImages[2].convertTo(value, CV_8UC1);
-    morphologyEx(hsvImages[0], hue, MORPH_OPEN,kernel_1);
-    morphologyEx(hue, hue, MORPH_CLOSE, kernel_2);
 
+    //morphologyEx(hsvImages[0], hue, MORPH_OPEN,kernel_2);
+    //morphologyEx(hue, hue, MORPH_CLOSE, kernel_1);
+    medianBlur(hsvImages[0],hue,3);
     //中值滤波，去除S通道噪声点
     medianBlur(hsvImages[1],saturation,3);
     //morphologyEx(hsvImages[1], saturation, MORPH_OPEN, kernel_1);
@@ -63,7 +65,7 @@ Mat ImagePreprocessor::preprocess(const Mat& srcImage)
     morphologyEx(framethreshold, framethreshold, MORPH_CLOSE, kernel_3);
 
     //根据团块外接轮廓的H与S通道去噪
-    //wipePoints(framethreshold, hue, saturation);
+    wipePoints(framethreshold, hue, saturation);
     //中值滤波
 
     //显示单通道处理后图像
