@@ -41,16 +41,6 @@ private slots:
 
     void on_minHeightWidthRat_valueChanged(double arg1);
 
-    void on_maxWidthRat_valueChanged(double arg1);
-
-    void on_maxHeightRat_valueChanged(double arg1);
-
-    void on_maxAngleDiff_valueChanged(double arg1);
-
-    void on_maxHeightGapRat_valueChanged(double arg1);
-
-    void on_minHeightGapRat_valueChanged(double arg1);
-
     void on_inRangePercent_valueChanged(double arg1);
 
     void on_outRangePercent_valueChanged(double arg1);

@@ -8,7 +8,6 @@
         <minArea> 0 </minArea>
         <maxHeightWidthRat> 15 </maxHeightWidthRat>
         <minHeightWidthRat> 1 </minHeightWidthRat>
-
         <inRangePercent> 0.86 </inRangePercent>
         <outRangePercent> 0.05 </outRangePercent>
         <armourPixelAvg> 60 </armourPixelAvg>
