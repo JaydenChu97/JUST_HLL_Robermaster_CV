@@ -6,6 +6,14 @@ Serial::Serial()
 
 }
 
+void Serial::convertCoord(const cv::Rect2d& armourBlock,const cv::Mat& resizeFrame,
+                          short& xDiff, short& yDiff)
+{
+
+    xDiff = static_cast<short>(armourBlock.x+armourBlock.width/2-resizeFrame.cols/2);
+    yDiff = static_cast<short>(resizeFrame.rows/2-(armourBlock.y+armourBlock.height/2));
+}
+
 bool Serial::init(QString portName)
 {
     //串口信息类，用于读取可用串口所有的信息
@@ -43,8 +51,12 @@ bool Serial::init(QString portName)
     return false;
 }
 
-void Serial::writeBytes(short xDiff, short yDiff)
+void Serial::writeBytes(const cv::Rect2d& armourBlock, const cv::Mat& resizeFrame)
 {
+    short xDiff, yDiff;
+
+    convertCoord(armourBlock, resizeFrame, xDiff, yDiff);
+
     //待写入数据缓冲区
     QByteArray buffer;
     //向缓冲区添加表示两个短整型数的四个字节

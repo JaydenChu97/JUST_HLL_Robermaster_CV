@@ -144,12 +144,13 @@ private:
     vector<RotatedRect> calcBlocksInfo(const vector<vector<Point> >& blocks);
 
     /**
-    * @brief 进一步筛选，多个灯柱与甲板进行处理
-    * @details 通过初步筛选，运用两个灯柱的信息计算甲板像素离散程度，
-    *          并计算两灯柱框定区域内连通域数量以检测确定甲板
+    * @brief 进一步筛选，多个灯柱与甲板进行处理,最后存入armourBlocks
     * @details 分为两灯柱初步信息检测，甲板像素离散度检测与灯柱减连通域数量检测
-    * @param[in] 通过单个灯柱信息筛选所确立的灯柱团块
-    * @param[in] armourBlocks 最终筛选出的包围甲板的最小旋转矩形数组
+    *          运用两个灯柱的信息计算甲板像素离散程度，
+    *          计算两灯柱框定区域内连通域数量以检测确定甲板
+    * @param[in] lampBlocks 通过单个灯柱信息筛选所确立的灯柱团块
+    * @param[in] srcImage 原彩色图像
+    * @param[in] dstImage 原二值化图像
     * @return 包围灯柱对即装甲板区域的最小旋转矩形数组
     */
     vector<RotatedRect> extracArmourBlocks(const vector<RotatedRect>& lampBlocks,
@@ -160,24 +161,27 @@ private:
      * @brief 根据灰度图计算甲板的区间范围的值
      * @details 计算甲板像素平均值左右与大于某区间的像素比例
      * @param[in] initLightBlocks 通过两灯柱初步信息检测所筛选出来的灯柱块
-     * @param[in] srcImage 原图像
+     * @param[in] srcImage 原彩色图像
+     * @param[in] dstImage 原二值化图像
      * @param[in] armourPixelAvg 像素的平均值
      * @param[in] inRangePercent 设定区间范围内像素的平均值
      * @param[in] outRangePercent 设定区间范围外像素的平均值
      * @return null
      */
     void calcDeviation(vector<RotatedRect> initLightBlocks,
-                       const Mat& srcImage, const Mat& dstImage,
-                       double& armourPixelAvg, double& inRangePercent,
+                       const Mat& srcImage,
+                       const Mat& dstImage,
+                       double& armourPixelAvg,
+                       double& inRangePercent,
                        double& outRangePercent);
 
     /**
      * @brief 连通域数量检测
      * @details 求两灯柱外接矩形，检测矩形内的连通域，若连通域数量为2，
      *          对此两灯柱块确定最小外接矩形并返回该灯柱团块
-     * @param[in] allInitLightBlocks 初步筛选一帧总的灯柱矩形
      * @param[in] initLightBlocks 通过两灯柱初步信息检测所筛选出来的灯柱块
      * @param[in] finalLightBlocks 连通域数量检测后符合条件的矩形
+     * @param[in] dstImgage 原二值化图像
      * @return 最后筛选出的甲板外接矩形
      */    
     vector<RotatedRect> domainCountDetect(const vector<RotatedRect>& initLightBlocks,

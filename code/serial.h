@@ -32,6 +32,9 @@
 #include <QtSerialPort/QSerialPortInfo>
 #include <QDebug>
 
+/*opencv库*/
+#include "opencv2/opencv.hpp"
+
 namespace HCVC {
 //! @addtogroup control
 //! @{
@@ -70,7 +73,11 @@ public:
     * @return null
     * @note 计算的坐标原点为图像几何中心，建立笛卡尔坐标系
     */
-    void writeBytes(short xDiff, short yDiff);
+    void writeBytes(const cv::Rect2d& armourBlock, const cv::Mat& resizeFrame);
+
+private:
+    void convertCoord(const cv::Rect2d& armourBlock, const cv::Mat& resizeFrame,
+                      short& xDiff, short& yDiff);
 
 private slots:
     /**

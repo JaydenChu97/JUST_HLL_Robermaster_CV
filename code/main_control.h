@@ -38,6 +38,7 @@
 /*自定义库*/
 #include "armour_detector.h"
 #include "armour_tracker.h"
+#include "serial.h"
 
 /**
 * @brief HLL Computer Vision Code namepace.
@@ -110,6 +111,9 @@ private:
 
     //! 存储读取的文件数据
     VideoCapture srcFile;
+
+    //! 串口通信类
+    Serial serial;
 };
 //! @}
 }

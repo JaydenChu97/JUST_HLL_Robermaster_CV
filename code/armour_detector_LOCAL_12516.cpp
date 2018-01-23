@@ -108,6 +108,9 @@ void ArmourDetector::fillLampBlock(Mat& srcImage,
     //向当前正在填充的团块中加入数据，
     //注意点的坐标是（x，y），指针访问的坐标顺序是（y，x），x为横轴，y为纵轴
 
+    //qDebug() << col << '\t' << row << endl;
+    //bug
+
     blocks.back().push_back(Point(col, row));
 /*
     qDebug() << blocks.back().size() << endl;
@@ -186,11 +189,11 @@ vector<RotatedRect> ArmourDetector::calcBlocksInfo(const vector<vector<Point> >&
     {
         RotatedRect minRotatedRect = minAreaRect(blocks[i]);
             if(minRotatedRect.size.area() > params.minArea
-            &&((//minRotatedRect.angle > -params.angleRange
-              ((minRotatedRect.size.height/minRotatedRect.size.width >= params.minHeightWidthRat)
+            &&((minRotatedRect.angle > -params.angleRange
+              &&((minRotatedRect.size.height/minRotatedRect.size.width >= params.minHeightWidthRat)
                 &&(minRotatedRect.size.height/minRotatedRect.size.width <= params.maxHeightWidthRat)))
-             ||(//minRotatedRect.angle < params.angleRange-90
-               ((minRotatedRect.size.width/minRotatedRect.size.height >= params.minHeightWidthRat)
+             ||(minRotatedRect.angle < params.angleRange-90
+               &&((minRotatedRect.size.width/minRotatedRect.size.height >= params.minHeightWidthRat)
                 &&(minRotatedRect.size.width/minRotatedRect.size.height <= params.maxHeightWidthRat)))))
             {
                 lampBlocks.push_back(minRotatedRect);
@@ -217,7 +220,7 @@ vector<RotatedRect> ArmourDetector::extracArmourBlocks(const vector<RotatedRect>
         for(unsigned int j = i + 1; j < lampBlocks.size(); j++)
         {
             if(abs(lampBlocks[i].center.y - lampBlocks[j].center.y) <
-                    0.7*abs(lampBlocks[i].center.x-lampBlocks[j].center.x))
+                    0.5*abs(lampBlocks[i].center.x-lampBlocks[j].center.x))
             {
                 if((lampBlocks[i].boundingRect2f().area()
                     > 0.2*lampBlocks[j].boundingRect2f().area())
@@ -235,8 +238,6 @@ vector<RotatedRect> ArmourDetector::extracArmourBlocks(const vector<RotatedRect>
                                   armourPixelAvg,
                                   inRangePercent,
                                   outRangePercent);
-
-                    float product = pow(1/(4*outRangePercent)*inRangePercent,2);
 
                     //根据像素的离散程度再次筛选甲板
                     if(inRangePercent > params.inRangePercent
@@ -256,7 +257,7 @@ vector<RotatedRect> ArmourDetector::extracArmourBlocks(const vector<RotatedRect>
 
                         if(initArmourBlocks.size() != 0)
                         {
-                            for(unsigned int k=0; k < initArmourBlocks.size(); k++)
+                            for(int k=0; k<initArmourBlocks.size(); k++)
                             {
                                 armourBlocks.push_back(initArmourBlocks[k]);
                                 initArmourBlocks.clear();
@@ -291,29 +292,29 @@ void ArmourDetector::calcDeviation(vector<RotatedRect> initLightBlocks,
     inRangePercent = 0;//区间范围内像素所占比例
     outRangePercent = 0;//区间外像素所占比例
 
-    for (unsigned int i = 0; i < initLightBlocks.size()-1; i++)
+    for (int i = 0; i < initLightBlocks.size()-1; i++)
     {
-        for (unsigned int j = i+1; j < initLightBlocks.size(); j++)
+        for (int j = i+1; j < initLightBlocks.size(); j++)
         {
-            int a1=initLightBlocks[i].boundingRect2f().x,
-                a2=initLightBlocks[i].boundingRect2f().x+initLightBlocks[i].boundingRect2f().width,
-                a3=initLightBlocks[j].boundingRect2f().x,
-                a4=initLightBlocks[j].boundingRect2f().x+initLightBlocks[j].boundingRect2f().width;
-            int b1=initLightBlocks[i].boundingRect2f().y,
-                b2=initLightBlocks[i].boundingRect2f().y+initLightBlocks[i].boundingRect2f().height,
-                b3=initLightBlocks[j].boundingRect2f().y,
-                b4=initLightBlocks[j].boundingRect2f().y+initLightBlocks[j].boundingRect2f().height;
+            double a1=initLightBlocks[i].boundingRect2f().x,
+                   a2=initLightBlocks[i].boundingRect2f().x+initLightBlocks[i].boundingRect2f().width,
+                   a3=initLightBlocks[j].boundingRect2f().x,
+                   a4=initLightBlocks[j].boundingRect2f().x+initLightBlocks[j].boundingRect2f().width;
+            double b1=initLightBlocks[i].boundingRect2f().y,
+                   b2=initLightBlocks[i].boundingRect2f().y+initLightBlocks[i].boundingRect2f().height,
+                   b3=initLightBlocks[j].boundingRect2f().y,
+                   b4=initLightBlocks[j].boundingRect2f().y+initLightBlocks[j].boundingRect2f().height;
 
-            int left = min(min(min(a1, a2), a3), a4);//左边界
-            int right = max(max(max(a1, a2), a3), a4);//右边界
-            int top = min(min(min(b1, b2), b3), b4);//上边界
-            int bottom = max(max(max(b1, b2), b3), b4);//下边界
+            double left = min(min(min(a1, a2), a3), a4);//左边界
+            double right = max(max(max(a1, a2), a3), a4);//右边界
+            double top = min(min(min(b1, b2), b3), b4);//上边界
+            double bottom = max(max(max(b1, b2), b3), b4);//下边界
 
-            for(unsigned int i = top; i < bottom; i++)
+            for (int i = top; i < bottom; i++)
             {
                 uchar* grayData = gray.ptr<uchar>(i);//灰度图像素
                 uchar* framethresholdData = framethreshold.ptr<uchar>(i);//二值化图像素
-                for (unsigned int j = left; j < right; j++)
+                for (int j = left; j < right; j++)
                 {
                     if (framethresholdData[j] == 0)//非灯条像素
                     {
@@ -326,11 +327,11 @@ void ArmourDetector::calcDeviation(vector<RotatedRect> initLightBlocks,
 
              //求甲板像素给定区间范围内与外像素值
              int range = (int)armourPixelAvg;
-             for (unsigned int i = top; i < bottom; i++)
+             for (int i = top; i < bottom; i++)
              {
                  uchar* grayData = gray.ptr<uchar>(i);
                  uchar* framethresholdData = framethreshold.ptr<uchar>(i);//二值化图像素
-                 for (unsigned int j = left; j < right; j++)
+                 for (int j = left; j < right; j++)
                  {
                      if (framethresholdData[j] == 0)
                      {
@@ -354,44 +355,42 @@ vector<RotatedRect> ArmourDetector::domainCountDetect(const vector<RotatedRect> 
 
     vector<RotatedRect> initArmourBlock;
 
-    //纵向进行膨胀处理，事检测连通域数量尽量多，从而排除一些错误匹配
     Mat kernel = getStructuringElement(MORPH_RECT, Size(1,5));
     Mat labelImg = dstImage.clone();
     dilate(labelImg, labelImg, kernel);
 
-    for (unsigned int i = 0; i < initLightBlocks.size()-1; i++)
+    for (int i = 0; i < initLightBlocks.size()-1; i++)
     {
-        for (unsigned int j = i+1; j < initLightBlocks.size(); j++)
+        for (int j = i+1; j < initLightBlocks.size(); j++)
         {
-            int a1 = initLightBlocks[i].boundingRect2f().x,
-                a2 = initLightBlocks[i].boundingRect2f().x
-                   + initLightBlocks[i].boundingRect2f().width,
-                a3 = initLightBlocks[j].boundingRect2f().x,
-                a4 = initLightBlocks[j].boundingRect2f().x
-                   + initLightBlocks[j].boundingRect2f().width;
-            int b1 = initLightBlocks[i].boundingRect2f().y,
-                b2 = initLightBlocks[i].boundingRect2f().y
-                   + initLightBlocks[i].boundingRect2f().height,
-                b3 = initLightBlocks[j].boundingRect2f().y,
-                b4 = initLightBlocks[j].boundingRect2f().y
-                   + initLightBlocks[j].boundingRect2f().height;
+            double a1 = initLightBlocks[i].boundingRect2f().x,
+                   a2 = initLightBlocks[i].boundingRect2f().x
+                      + initLightBlocks[i].boundingRect2f().width,
+                   a3 = initLightBlocks[j].boundingRect2f().x,
+                   a4 = initLightBlocks[j].boundingRect2f().x
+                      + initLightBlocks[j].boundingRect2f().width;
+            double b1 = initLightBlocks[i].boundingRect2f().y,
+                   b2 = initLightBlocks[i].boundingRect2f().y
+                      + initLightBlocks[i].boundingRect2f().height,
+                   b3 = initLightBlocks[j].boundingRect2f().y,
+                   b4 = initLightBlocks[j].boundingRect2f().y
+                      + initLightBlocks[j].boundingRect2f().height;
 
-            int left = min(min(min(a1, a2), a3), a4) - 1;//左边界
-            int right = max(max(max(a1, a2), a3), a4) + 1;//右边界
-            int top = min(min(min(b1, b2), b3), b4) - 1;//上边界
-            int bottom = max(max(max(b1, b2), b3), b4) + 1;//下边界
+            double left = min(min(min(a1, a2), a3), a4) - 1;//左边界
+            double right = max(max(max(a1, a2), a3), a4) + 1;//右边界
+            double top = min(min(min(b1, b2), b3), b4) - 1;//上边界
+            double bottom = max(max(max(b1, b2), b3), b4) + 1;//下边界
 
-            int labelvalue[1] = {0};           
+            int labelvalue[1] = {0};
             Point seed, neighbor;
             int rows = bottom;
             int cols = right;
             stack<Point> pointStack; // 堆栈
 
-            //通过压栈计算框定区域内连通域数量
-            for (unsigned int i = top; i < rows; i++)
+            for (int i = top; i < rows; i++)
             {
                 uchar* data = labelImg.ptr<uchar>(i);//获取一行的点
-                for (unsigned int j = left; j < cols; j++)
+                for (int j = left; j < cols; j++)
                 {
                     if (data[j] == 255)
                     {
@@ -434,7 +433,6 @@ vector<RotatedRect> ArmourDetector::domainCountDetect(const vector<RotatedRect> 
                                 pointStack.push(neighbor);
                             }
                             seed = pointStack.top();
-                          
                             //  获取堆栈上的顶部像素并将其标记为相同的标签
                             pointStack.pop();//弹出栈顶像素
                         }
@@ -444,7 +442,7 @@ vector<RotatedRect> ArmourDetector::domainCountDetect(const vector<RotatedRect> 
 
             imshow("labelImg", labelImg);
 
-            //筛选出框定区域内只喊两个连通域的外接矩形，排除错误匹配
+            //cout<<labelvalue[0]<<endl;
             if(labelvalue[0] == 2)
             {               
                 if(abs(initLightBlocks[i].center.y-initLightBlocks[j].center.y)<
@@ -476,6 +474,7 @@ vector<RotatedRect> ArmourDetector::domainCountDetect(const vector<RotatedRect> 
                     armourPoints.clear();
                 }
                 return initArmourBlock;
+                cout<<"labe"<<labelvalue[0]<<endl;
             }
         }
     }
@@ -519,14 +518,12 @@ void ArmourDetector::markArmourBlocks(const Mat& srcImage,
 
         Scalar armourBlockinRangePercent, armourBlockStdDev;
         meanStdDev(srcImage, armourBlockinRangePercent, armourBlockStdDev, mask);
-
         double grade = sqrt((pow(armourBlockinRangePercent[0], 2)
                      + pow(armourBlockinRangePercent[1], 2)
                      + pow(armourBlockinRangePercent[2], 2))/3.0)
                      + 5 * sqrt((pow(armourBlockStdDev[0], 2)
                      + pow(armourBlockStdDev[1], 2)
                      + pow(armourBlockStdDev[2], 2))/3.0);
-      
         imshow("mask", mask);
 
         optimalArmourBlocks.push_back(OptimalArmourBlock(armourBlocks[id], grade));
