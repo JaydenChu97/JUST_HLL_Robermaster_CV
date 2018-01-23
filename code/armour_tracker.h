@@ -61,9 +61,14 @@ public:
     */
     bool track(Mat srcImage);
 
+    Rect2d getArmourBlock() const;
+
 private:
     //! kcf匹配算法图像追踪器
     Ptr<TrackerKCF> tracker;
+
+    //! 检测到的装甲板区域
+    Rect2d armourBlock;
 
     /**
     * @brief sobel特征提取器

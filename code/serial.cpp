@@ -6,11 +6,12 @@ Serial::Serial()
 
 }
 
-void Serial::convertCoord(const cv::Rect2d& armourBlock, short& xDiff, short& yDiff)
+void Serial::convertCoord(const cv::Rect2d& armourBlock,const cv::Mat& resizeFrame,
+                          short& xDiff, short& yDiff)
 {
 
-    xDiff = static_cast<short>(armourBlock.x+armourBlock.width/2);
-    yDiff = static_cast<short>(armourBlock.y+armourBlock.height/2);
+    xDiff = static_cast<short>(armourBlock.x+armourBlock.width/2-resizeFrame.cols/2);
+    yDiff = static_cast<short>(resizeFrame.rows/2-(armourBlock.y+armourBlock.height/2));
 }
 
 bool Serial::init(QString portName)
@@ -50,11 +51,11 @@ bool Serial::init(QString portName)
     return false;
 }
 
-void Serial::writeBytes(const cv::Rect2d& armourBlock)
+void Serial::writeBytes(const cv::Rect2d& armourBlock, const cv::Mat& resizeFrame)
 {
     short xDiff, yDiff;
 
-    convertCoord(armourBlock, xDiff, yDiff);
+    convertCoord(armourBlock, resizeFrame, xDiff, yDiff);
 
     //待写入数据缓冲区
     QByteArray buffer;

@@ -23,7 +23,6 @@ void ArmourTracker::init(const Mat &srcImage, Rect2d armourBlock)
 
 bool ArmourTracker::track(Mat srcImage)
 {
-    Rect2d armourBlock;
     //追踪目标区域
     if(tracker->update(srcImage, armourBlock) == false)
     {
@@ -34,6 +33,11 @@ bool ArmourTracker::track(Mat srcImage)
     rectangle(srcImage, armourBlock, Scalar(255, 0, 0), 2, 1);
 
     return true;
+}
+
+Rect2d ArmourTracker::getArmourBlock() const
+{
+    return armourBlock;
 }
 
 void ArmourTracker::sobelExtractor(const Mat img, const Rect roi, Mat& feat)

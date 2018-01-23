@@ -38,11 +38,13 @@ Mat ImagePreprocessor::preprocess(const Mat& srcImage)
     Mat kernel_1 = getStructuringElement(MORPH_RECT, Size(2,2));
     Mat kernel_2 = getStructuringElement(MORPH_RECT, Size(8,8));
 
-    //开运算去除小的噪声点，闭运算连接断开部分，对H与S通道进行处理，方便去除背景干扰
+    //开运算去除小的噪声点，闭运算连接断开部分，对H进行处理
     Mat hue, saturation, value;
     hsvImages[2].convertTo(value, CV_8UC1);
     morphologyEx(hsvImages[0], hue, MORPH_OPEN,kernel_1);
     morphologyEx(hue, hue, MORPH_CLOSE, kernel_2);
+
+    //中值滤波，去除S通道噪声点
     medianBlur(hsvImages[1],saturation,3);
     //morphologyEx(hsvImages[1], saturation, MORPH_OPEN, kernel_1);
     //morphologyEx(saturation, saturation, MORPH_CLOSE, kernel_2);
@@ -53,10 +55,12 @@ Mat ImagePreprocessor::preprocess(const Mat& srcImage)
     //根据三个通道初步绘制二值化图
     threshProcess(framethreshold, hue, saturation, value);
 
-    //中值滤波去除噪声点
+    //中值滤波去除噪声点，同时使灯柱边缘润滑
     medianBlur(framethreshold, framethreshold,3);
 
-    imshow("framethreshold", framethreshold);
+    //水平方向连接一些断开的团块，防止运动模糊产生重影而加大检测计算量
+    Mat kernel_3 = getStructuringElement(MORPH_RECT, Size(2,1));
+    morphologyEx(framethreshold, framethreshold, MORPH_CLOSE, kernel_3);
 
     //根据团块外接轮廓的H与S通道去噪
     //wipePoints(framethreshold, hue, saturation);
@@ -78,12 +82,14 @@ void ImagePreprocessor::threshProcess(Mat& framethreshold,
                                       Mat& saturation,
                                       Mat& value)
 {
+    //查找轮廓，只检索最外面的轮廓，将所有的连码点转换成点
     vector<vector<Point> > contours;//定义一个返回轮廓的容器
     findContours(value, contours, CV_RETR_EXTERNAL, CV_CHAIN_APPROX_NONE);
-    //查找轮廓，只检索最外面的轮廓，将所有的连码点转换成点
-    vector<Rect> boundRect(contours.size());//画矩形
 
-    for(int a = 0; a < contours.size(); a++)
+    //轮廓的最小外接矩形
+    vector<Rect> boundRect(contours.size());
+
+    for(unsigned int a = 0; a < contours.size(); a++)
     {
         boundRect[a] = boundingRect(contours[a]);
 
@@ -95,7 +101,8 @@ void ImagePreprocessor::threshProcess(Mat& framethreshold,
               bottom = boundRect[a].y + 2*boundRect[a].height/2;
 
         //检测亮度通道团块在H与S通道周围像素情况，存在所设定阈值像素则判定为灯柱
-        if(left > 0 && right < framethreshold.cols && top > 0 && bottom < framethreshold.rows)
+        if(left > 0 && right < framethreshold.cols
+                && top > 0 && bottom < framethreshold.rows)
         {
             for(int i = top; i < bottom; i++)
             {
@@ -114,11 +121,15 @@ void ImagePreprocessor::threshProcess(Mat& framethreshold,
         //根据亮度图团块进行二值图的绘制
         if(huePixel > 0 && saturationPixel > 0)
         {
-            for (int i = boundRect[a].y; i < boundRect[a].y + boundRect[a].height; i++)
+            for (unsigned int i = boundRect[a].y;
+                 i < boundRect[a].y + boundRect[a].height;
+                 i++)
             {
                 uchar* valueData = value.ptr<uchar>(i);
                 uchar* framethresholdData = framethreshold.ptr<uchar>(i);
-                for (int j = boundRect[a].x; j < boundRect[a].x + boundRect[a].width; j++)
+                for (unsigned int j = boundRect[a].x;
+                     j < boundRect[a].x + boundRect[a].width;
+                     j++)
                 {
                         if (valueData[j] == 255)
                             framethresholdData[j] = 255;
@@ -134,12 +145,12 @@ void ImagePreprocessor::wipePoints(Mat& framethreshold, Mat& hue, Mat& saturatio
     vector<vector<Point> >contours;
     findContours(framethreshold, contours, CV_RETR_EXTERNAL, CV_CHAIN_APPROX_NONE);
     vector<Rect> boundRect(contours.size());
-    for(int a=0; a<contours.size(); a++)
+    for(unsigned int a=0; a<contours.size(); a++)
     {
-        double H_out[1] = {0};
-        double S_out[1] = {0};
+        float H_out[1] = {0};
+        float S_out[1] = {0};
         //轮廓面积
-        double lightArea = contourArea(contours[a], false);
+        float lightArea = contourArea(contours[a], false);
         boundRect[a] = boundingRect(contours[a]);
         for(int b = 0; b < contours[a].size(); b++)
         {
@@ -156,10 +167,10 @@ void ImagePreprocessor::wipePoints(Mat& framethreshold, Mat& hue, Mat& saturatio
         //若不存在所需像素，则将像素变为黑色
         if((H_out[0] == 0 && S_out[0] == 0) || lightArea < 5)
         {
-            for (int i = boundRect[a].y; i < boundRect[a].y + boundRect[a].height; i++)
+            for(unsigned int i = boundRect[a].y; i < boundRect[a].y + boundRect[a].height; i++)
             {
                 uchar* framethresholdData = framethreshold.ptr<uchar>(i);
-                for (int j = boundRect[a].x; j < boundRect[a].x + boundRect[a].width; j++)
+                for (unsigned int j = boundRect[a].x; j < boundRect[a].x + boundRect[a].width; j++)
                     framethresholdData[j] = 0;
             }
         }

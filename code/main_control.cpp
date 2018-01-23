@@ -5,6 +5,12 @@ namespace HCVC
 MainControl::MainControl()
 {
     status = DETECTING;
+
+    //初始化串口，如果初始化不成功
+    if(serial.init("COM1"))
+    {
+        qDebug() << "SerialPort init sucess!" << endl;
+    }
 }
 
 bool MainControl::readSrcFile(string path)
@@ -71,10 +77,13 @@ void MainControl::run(const string& path)
         //重调至合适的大小，减小运算量
         resize(frame, resizeFrame, Size(1080, 560));
 
+        //检测到的装甲区域
+        Rect2d armourBlock;
+
         //检测图片中的灯柱位置
         if(status == DETECTING && armourDetector.detect(resizeFrame))
         {
-            Rect2d armourBlock = armourDetector.getBestArmourBlock();
+            armourBlock = armourDetector.getBestArmourBlock();
             armourTracker.init(resizeFrame, armourBlock);
             status = TRACKING;
         }
@@ -82,8 +91,12 @@ void MainControl::run(const string& path)
         // 追踪装甲板区域
         if(status == TRACKING && !armourTracker.track(resizeFrame))
         {
+            armourBlock = armourTracker.getArmourBlock();
             status = DETECTING;
         }
+
+        //向串口写入相对坐标
+        serial.writeBytes(armourBlock,resizeFrame);
 
         //显示原图像(重调大小后)
         imshow(srcFilePath, resizeFrame);

@@ -82,7 +82,7 @@ public:
      * @param[in] value value通道
      * @return null
      */
-    void threshProcess(Mat& framethreshold,Mat& hue,Mat& saturation,Mat& value);
+    void threshProcess(Mat& framethreshold, Mat& hue, Mat& saturation, Mat& value);
 
     /**
      * @brief 以H与S通道为辅助通道，轮廓面积对二值化图进行去噪处理
@@ -92,7 +92,7 @@ public:
      * @param[in] saturation S通道
      * @return null
      */
-    void wipePoints(Mat& framethreshold,Mat& hue,Mat& saturation);
+    void wipePoints(Mat& framethreshold, Mat& hue, Mat& saturation);
 
     /**
     * @brief 设置预处理图像阈值
