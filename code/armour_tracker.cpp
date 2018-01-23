@@ -13,6 +13,9 @@ void ArmourTracker::init(const Mat &srcImage, Rect2d armourBlock)
     param.desc_npca = 0;
     param.compress_feature = true;
     param.compressed_size = 2;
+    param.output_sigma_factor=0.1;
+    param.resize=true;
+    param.max_patch_size=80*80;
 
     tracker = TrackerKCF::create(param);
 

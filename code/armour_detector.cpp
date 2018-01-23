@@ -86,7 +86,6 @@ void ArmourDetector::drawBlocks(Mat srcImage,
             line(srcImage, points[j], points[(j+1)%4], color, 2);
         }
     }
-
     imshow("detectBlocks", srcImage);
 }
 
@@ -159,7 +158,7 @@ vector<vector<Point> > ArmourDetector::searchBlocks(Mat srcImage)
         for (int col = 0; col < colNum; col++)
         {
             //按行优先的顺序访问图像矩阵后，找到的每一个非零数据一定是一个新的独立团块的起点
-            if(*srcImagePtr++)
+            if(*srcImagePtr++)                                                      //110
             {
                 //根据找到的起点，递归遍历所有它的相邻像素
                 blocks.push_back(vector<Point>());
@@ -187,12 +186,12 @@ vector<RotatedRect> ArmourDetector::calcBlocksInfo(const vector<vector<Point> >&
     {
         RotatedRect minRotatedRect = minAreaRect(blocks[i]);
             if(minRotatedRect.size.area() > params.minArea
-            &&((minRotatedRect.angle > -params.angleRange
+            &&((minRotatedRect.angle > params.angleRange)//110
               &&((minRotatedRect.size.height/minRotatedRect.size.width >= params.minHeightWidthRat)
                 &&(minRotatedRect.size.height/minRotatedRect.size.width <= params.maxHeightWidthRat)))
              ||(minRotatedRect.angle < params.angleRange-90
                &&((minRotatedRect.size.width/minRotatedRect.size.height >= params.minHeightWidthRat)
-                &&(minRotatedRect.size.width/minRotatedRect.size.height <= params.maxHeightWidthRat)))))
+                &&(minRotatedRect.size.width/minRotatedRect.size.height <= params.maxHeightWidthRat))))
             {
                 lampBlocks.push_back(minRotatedRect);
             }
@@ -494,11 +493,12 @@ void ArmourDetector::markArmourBlocks(const Mat& srcImage,
 
     for(unsigned int id = 0; id < armourBlocks.size(); id++)
     {
+        armourBlocks[id];
         Point2f fpoints[4];
         armourBlocks[id].points(fpoints);
 
         //剪去旋转矩形的多余边角，得到装甲板的平行四边形区域
-        //cutEdgeOfRect(fpoints);
+        cutEdgeOfRect(fpoints);
 
         //浮点数转换整数
         Point points[4];
@@ -518,6 +518,7 @@ void ArmourDetector::markArmourBlocks(const Mat& srcImage,
         bitwise_and(mask, invDstImage, mask);
 
         Scalar armourBlockinRangePercent, armourBlockStdDev;
+
         meanStdDev(srcImage, armourBlockinRangePercent, armourBlockStdDev, mask);
 
         double grade = sqrt((pow(armourBlockinRangePercent[0], 2)
