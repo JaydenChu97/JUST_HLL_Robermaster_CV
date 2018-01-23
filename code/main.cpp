@@ -20,7 +20,7 @@ int main(int argc, char *argv[])
 
     try
     {
-        instance.run("camera");
+        instance.run("E:\\opencvshipin\\shipin2\\redcar1.MOV");
     }
     catch(const string& hint)
     {
