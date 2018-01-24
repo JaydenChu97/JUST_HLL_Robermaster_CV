@@ -380,7 +380,7 @@
            <item>
             <widget class="QDoubleSpinBox" name="armourPixelAvg">
              <property name="maximum">
-              <double>100.000000000000000</double>
+              <double>150.000000000000000</double>
              </property>
              <property name="value">
               <double>60.000000000000000</double>
