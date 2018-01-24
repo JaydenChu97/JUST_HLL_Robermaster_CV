@@ -41,7 +41,7 @@ Mat ImagePreprocessor::preprocess(const Mat& srcImage)
 
     //开运算去除小的噪声点，闭运算连接断开部分，对H进行处理
     Mat hue, saturation, value;
-    hsvImages[2].convertTo(value, CV_8UC1);
+    medianBlur(hsvImages[0], hue, 5);
 
     //morphologyEx(hsvImages[0], hue, MORPH_OPEN,kernel_2);
     //morphologyEx(hue, hue, MORPH_CLOSE, kernel_1);
