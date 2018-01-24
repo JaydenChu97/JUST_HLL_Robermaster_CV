@@ -59,7 +59,6 @@ void Serial::writeBytes(const cv::Rect2d& armourBlock, const cv::Mat& resizeFram
         write(QByteArray(4, 127));
         return ;
     }
-
     short xDiff, yDiff;
 
     convertCoord(armourBlock, resizeFrame, xDiff, yDiff);

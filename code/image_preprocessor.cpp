@@ -32,6 +32,7 @@ Mat ImagePreprocessor::preprocess(const Mat& srcImage)
     hsvImages[0] = rangeThreshold(hsvImages[0], 0);
     hsvImages[1] = rangeThreshold(hsvImages[1], 1);
     hsvImages[2] = rangeThreshold(hsvImages[2], 2);
+    imshow("h",hsvImages[0]);
 
     //获取自定义核，核边长只能为奇数
     //Mat erodeKernel = getStructuringElement(MORPH_RECT, Size(3, 3));
@@ -154,6 +155,7 @@ void ImagePreprocessor::wipePoints(const Mat& srcImage,Mat& framethreshold, Mat&
         float S_out[1] = {0};
         unsigned int contoursRedSum = 0;
         unsigned int contoursBlueSum = 0;
+
         //轮廓面积
         float lightArea = contourArea(contours[a], false);
         boundRect[a] = boundingRect(contours[a]);
