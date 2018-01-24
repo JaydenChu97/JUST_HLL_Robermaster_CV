@@ -21,7 +21,7 @@ ImagePreprocessor::ImagePreprocessor()
 
 Mat ImagePreprocessor::preprocess(const Mat& srcImage)
 {
-    Mat dstImage;
+    Mat dstImage;   
 
     //将bgr格式(opencv默认将彩色图片存储为bgr格式)图像转变为hsv格式
     cvtColor(srcImage, dstImage, CV_BGR2HSV);
@@ -32,7 +32,6 @@ Mat ImagePreprocessor::preprocess(const Mat& srcImage)
     hsvImages[0] = rangeThreshold(hsvImages[0], 0);
     hsvImages[1] = rangeThreshold(hsvImages[1], 1);
     hsvImages[2] = rangeThreshold(hsvImages[2], 2);
-    imshow("h",hsvImages[0]);
 
     //获取自定义核，核边长只能为奇数
     //Mat erodeKernel = getStructuringElement(MORPH_RECT, Size(3, 3));
@@ -41,15 +40,16 @@ Mat ImagePreprocessor::preprocess(const Mat& srcImage)
 
     //开运算去除小的噪声点，闭运算连接断开部分，对H进行处理
     Mat hue, saturation, value;
-    hsvImages[2].convertTo(value, CV_8UC1);
-
+    //hsvImages[2].convertTo(value, CV_8UC1);
     //morphologyEx(hsvImages[0], hue, MORPH_OPEN,kernel_2);
     //morphologyEx(hue, hue, MORPH_CLOSE, kernel_1);
-    medianBlur(hsvImages[0],hue,3);
-    //中值滤波，去除S通道噪声点
-    medianBlur(hsvImages[1],saturation,3);
     //morphologyEx(hsvImages[1], saturation, MORPH_OPEN, kernel_1);
     //morphologyEx(saturation, saturation, MORPH_CLOSE, kernel_2);
+
+    //中值滤波，去除S通道噪声点
+    medianBlur(hsvImages[0], hue, 5);
+    medianBlur(hsvImages[1],saturation,5);
+    medianBlur(hsvImages[2], value, 5);
 
     //初始化二值化图
     Mat framethreshold = Mat(value.size(), CV_8UC1,Scalar(0));
@@ -60,12 +60,12 @@ Mat ImagePreprocessor::preprocess(const Mat& srcImage)
     //中值滤波去除噪声点，同时使灯柱边缘润滑
     medianBlur(framethreshold, framethreshold,3);
 
-    //水平方向连接一些断开的团块，防止运动模糊产生重影而加大检测计算量
-    Mat kernel_3 = getStructuringElement(MORPH_RECT, Size(2,1));
+    //水平,竖直方向连接一些断开的团块，防止运动模糊产生重影
+    Mat kernel_3 = getStructuringElement(MORPH_RECT, Size(4,4));
     morphologyEx(framethreshold, framethreshold, MORPH_CLOSE, kernel_3);
 
     //根据团块外接轮廓的H与S通道去噪
-    wipePoints(framethreshold, hue, saturation);
+    wipePoints(srcImage, framethreshold, hue, saturation);
     //中值滤波
 
     //显示单通道处理后图像
@@ -141,16 +141,19 @@ void ImagePreprocessor::threshProcess(Mat& framethreshold,
     }
 }
 
-void ImagePreprocessor::wipePoints(Mat& framethreshold, Mat& hue, Mat& saturation)
+void ImagePreprocessor::wipePoints(const Mat& srcImage,Mat& framethreshold, Mat& hue, Mat& saturation)
 {    
     //对已经绘制好的灰度图进行除噪，通过轮廓上点是否存在所需颜色与饱和度像素，轮廓面积进行去噪
     vector<vector<Point> >contours;
     findContours(framethreshold, contours, CV_RETR_EXTERNAL, CV_CHAIN_APPROX_NONE);
     vector<Rect> boundRect(contours.size());
+
     for(unsigned int a=0; a<contours.size(); a++)
     {
         float H_out[1] = {0};
         float S_out[1] = {0};
+        unsigned int contoursRedSum = 0;
+        unsigned int contoursBlueSum = 0;
         //轮廓面积
         float lightArea = contourArea(contours[a], false);
         boundRect[a] = boundingRect(contours[a]);
@@ -164,10 +167,17 @@ void ImagePreprocessor::wipePoints(Mat& framethreshold, Mat& hue, Mat& saturatio
                 if(saturation.at<uchar>(outPoint) == 255)
                     S_out[0]++;
             }
+
+            contoursRedSum += srcImage.at<Vec3b>(outPoint)[2];
+            contoursBlueSum += srcImage.at<Vec3b>(outPoint)[0];
         }
 
+        unsigned int redAvg = contoursRedSum/contours[a].size();
+        unsigned int blueAvg = contoursBlueSum/contours[a].size();
+        cout<<"redAvg:"<<redAvg<<"\t"<<"blueAvg:"<<blueAvg<<endl;
+
         //若不存在所需像素，则将像素变为黑色
-        if((H_out[0] == 0 && S_out[0] == 0) || lightArea < 5)
+        if((H_out[0] == 0 && S_out[0] == 0)||(lightArea < 10)||blueAvg < redAvg)
         {
             for(unsigned int i = boundRect[a].y; i < boundRect[a].y + boundRect[a].height; i++)
             {

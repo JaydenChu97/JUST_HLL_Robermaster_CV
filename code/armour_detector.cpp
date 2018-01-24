@@ -449,7 +449,7 @@ vector<RotatedRect> ArmourDetector::domainCountDetect(const vector<RotatedRect> 
                     }
                 }
 
-                imshow("labelImg", labelImg);
+                //imshow("labelImg", labelImg);
 
                 //筛选出框定区域内只喊两个连通域的外接矩形，排除错误匹配
                 if(labelvalue[0] == 2)
@@ -535,7 +535,7 @@ void ArmourDetector::markArmourBlocks(const Mat& srcImage,
                      + pow(armourBlockStdDev[1], 2)
                      + pow(armourBlockStdDev[2], 2))/3.0);
       
-        imshow("mask", mask);
+        //imshow("mask", mask);
 
         optimalArmourBlocks.push_back(OptimalArmourBlock(armourBlocks[id], grade));
     }

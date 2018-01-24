@@ -92,7 +92,7 @@ public:
      * @param[in] saturation S通道
      * @return null
      */
-    void wipePoints(Mat& framethreshold, Mat& hue, Mat& saturation);
+    void wipePoints(const Mat& srcImage, Mat& framethreshold, Mat& hue, Mat& saturation);
 
     /**
     * @brief 设置预处理图像阈值

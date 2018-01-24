@@ -399,7 +399,7 @@ public:
 
         armourPixelAvg = new QDoubleSpinBox(layoutWidget);
         armourPixelAvg->setObjectName(QStringLiteral("armourPixelAvg"));
-        armourPixelAvg->setMaximum(100);
+        armourPixelAvg->setMaximum(150);
         armourPixelAvg->setValue(60);
 
         horizontalLayout_12->addWidget(armourPixelAvg);
