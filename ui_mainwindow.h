@@ -360,9 +360,9 @@ public:
 
         inRangePercent = new QDoubleSpinBox(layoutWidget);
         inRangePercent->setObjectName(QStringLiteral("inRangePercent"));
-        inRangePercent->setMinimum(0.7);
+        inRangePercent->setMinimum(0.5);
         inRangePercent->setMaximum(1);
-        inRangePercent->setSingleStep(0.3);
+        inRangePercent->setSingleStep(0.05);
         inRangePercent->setValue(0.86);
 
         horizontalLayout_10->addWidget(inRangePercent);
@@ -380,8 +380,8 @@ public:
 
         outRangePercent = new QDoubleSpinBox(layoutWidget);
         outRangePercent->setObjectName(QStringLiteral("outRangePercent"));
-        outRangePercent->setMaximum(0.15);
-        outRangePercent->setSingleStep(0.005);
+        outRangePercent->setMaximum(0.5);
+        outRangePercent->setSingleStep(0.05);
         outRangePercent->setValue(0.05);
 
         horizontalLayout_11->addWidget(outRangePercent);
@@ -416,7 +416,7 @@ public:
         MainWindow->setCentralWidget(centralWidget);
         menuBar = new QMenuBar(MainWindow);
         menuBar->setObjectName(QStringLiteral("menuBar"));
-        menuBar->setGeometry(QRect(0, 0, 621, 26));
+        menuBar->setGeometry(QRect(0, 0, 621, 17));
         MainWindow->setMenuBar(menuBar);
         mainToolBar = new QToolBar(MainWindow);
         mainToolBar->setObjectName(QStringLiteral("mainToolBar"));

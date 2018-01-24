@@ -60,6 +60,21 @@ public:
     */
     MainControl();
 
+    //! 摄像头参数
+    struct Params
+    {
+        float brightness;             /*!< 亮度 */
+        float contrast;               /*!< 对比度 */
+        float hue;                    /*!< 色调 */
+        float saturation;             /*!< 饱和度 */
+        float pan;                    /*!< 清晰度 */
+        float gamma;                  /*!< 伽马 */
+        float white_balance_red_v;    /*!< 白平衡 */
+        float backlight;              /*!< 逆光对比 */
+        float gain;                   /*!< 增益 */
+        float exposure;               /*!< 曝光 */
+    }params;
+
     /**
     * @brief 设置源文件读取路径
     * @details 从指定路径读取视频文件

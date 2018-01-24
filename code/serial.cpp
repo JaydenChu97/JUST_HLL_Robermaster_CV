@@ -51,8 +51,14 @@ bool Serial::init(QString portName)
     return false;
 }
 
-void Serial::writeBytes(const cv::Rect2d& armourBlock, const cv::Mat& resizeFrame)
+void Serial::writeBytes(const cv::Rect2d& armourBlock, const cv::Mat& resizeFrame, const bool& findArmourBlock)
 {
+    //如果没有检测到装甲板，则发送特殊字节串b 01111111 01111111 01111111 01111111
+    if(findArmourBlock == false)
+    {
+        write(QByteArray(4, 127));
+        return ;
+    }
     short xDiff, yDiff;
 
     convertCoord(armourBlock, resizeFrame, xDiff, yDiff);
@@ -62,6 +68,7 @@ void Serial::writeBytes(const cv::Rect2d& armourBlock, const cv::Mat& resizeFram
     //向缓冲区添加表示两个短整型数的四个字节
     buffer.append(reinterpret_cast<char*>(&xDiff), 2);
     buffer.append(reinterpret_cast<char*>(&yDiff), 2);
+
 
     //显示被写入的数据
     for(int i = 0; i < buffer.size(); i++)

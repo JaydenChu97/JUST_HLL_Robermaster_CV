@@ -309,40 +309,44 @@ void ArmourDetector::calcDeviation(vector<RotatedRect> initLightBlocks,
             int top = min(min(min(b1, b2), b3), b4);//上边界
             int bottom = max(max(max(b1, b2), b3), b4);//下边界
 
-            for(unsigned int i = top; i < bottom; i++)
+            if(left > 0 && right < framethreshold.cols
+                    && top > 0 && bottom < framethreshold.rows)
             {
-                uchar* grayData = gray.ptr<uchar>(i);//灰度图像素
-                uchar* framethresholdData = framethreshold.ptr<uchar>(i);//二值化图像素
-                for (unsigned int j = left; j < right; j++)
+                for(unsigned int i = top; i < bottom; i++)
                 {
-                    if (framethresholdData[j] == 0)//非灯条像素
+                    uchar* grayData = gray.ptr<uchar>(i);//灰度图像素
+                    uchar* framethresholdData = framethreshold.ptr<uchar>(i);//二值化图像素
+                    for (unsigned int j = left; j < right; j++)
                     {
-                        sum += grayData[j];
-                        armourPixelCount[0]++;
+                        if (framethresholdData[j] == 0)//非灯条像素
+                        {
+                            sum += grayData[j];
+                            armourPixelCount[0]++;
+                        }
                     }
                 }
-            }
-             armourPixelAvg = sum/armourPixelCount[0];
+                 armourPixelAvg = sum/armourPixelCount[0];
 
-             //求甲板像素给定区间范围内与外像素值
-             int range = (int)armourPixelAvg;
-             for (unsigned int i = top; i < bottom; i++)
-             {
-                 uchar* grayData = gray.ptr<uchar>(i);
-                 uchar* framethresholdData = framethreshold.ptr<uchar>(i);//二值化图像素
-                 for (unsigned int j = left; j < right; j++)
+                 //求甲板像素给定区间范围内与外像素值
+                 int range = (int)armourPixelAvg;
+                 for (unsigned int i = top; i < bottom; i++)
                  {
-                     if (framethresholdData[j] == 0)
+                     uchar* grayData = gray.ptr<uchar>(i);
+                     uchar* framethresholdData = framethreshold.ptr<uchar>(i);//二值化图像素
+                     for (unsigned int j = left; j < right; j++)
                      {
-                         if (grayData[j] < range + 10 && grayData[j] > range - 10)
-                             armourRangPixel[0]++;
-                         if (grayData[j] > range + 15)
-                             notArmourRangPixel[0]++;
+                         if (framethresholdData[j] == 0)
+                         {
+                             if (grayData[j] < range + 10 && grayData[j] > range - 10)
+                                 armourRangPixel[0]++;
+                             if (grayData[j] > range + 15)
+                                 notArmourRangPixel[0]++;
+                         }
                      }
                  }
-             }
-             inRangePercent = armourRangPixel[0] / armourPixelCount[0];
-             outRangePercent=notArmourRangPixel[0] / armourPixelCount[0];
+                 inRangePercent = armourRangPixel[0] / armourPixelCount[0];
+                 outRangePercent=notArmourRangPixel[0] / armourPixelCount[0];
+            }
         }
     }
 }
@@ -355,7 +359,7 @@ vector<RotatedRect> ArmourDetector::domainCountDetect(const vector<RotatedRect> 
     vector<RotatedRect> initArmourBlock;
 
     //纵向进行膨胀处理，事检测连通域数量尽量多，从而排除一些错误匹配
-    Mat kernel = getStructuringElement(MORPH_RECT, Size(1,5));
+    Mat kernel = getStructuringElement(MORPH_RECT, Size(5,5));
     Mat labelImg = dstImage.clone();
     dilate(labelImg, labelImg, kernel);
 
@@ -388,94 +392,98 @@ vector<RotatedRect> ArmourDetector::domainCountDetect(const vector<RotatedRect> 
             stack<Point> pointStack; // 堆栈
 
             //通过压栈计算框定区域内连通域数量
-            for (unsigned int i = top; i < rows; i++)
+            if(left > 0 && right < dstImage.cols
+                    && top > 0 && bottom < dstImage.rows)
             {
-                uchar* data = labelImg.ptr<uchar>(i);//获取一行的点
-                for (unsigned int j = left; j < cols; j++)
+                for (unsigned int i = top; i < rows; i++)
                 {
-                    if (data[j] == 255)
+                    uchar* data = labelImg.ptr<uchar>(i);//获取一行的点
+                    for (unsigned int j = left; j < cols; j++)
                     {
-                        labelvalue[0]++; //不断将标签数加一
-                        seed = Point(j, i);// Point坐标
-                        labelImg.at<uchar>(seed) = labelvalue[0];//标签
-                        pointStack.push(seed);//将像素seed压入栈，增加数据
-
-                        while (!pointStack.empty())//死循环，直到堆栈为空
+                        if (data[j] == 255)
                         {
-                            neighbor = Point(seed.x - 1, seed.y);//左像素
-                            if ((seed.x != 0)
-                                    && (labelImg.at<uchar>(neighbor) == 255))
-                            {
-                                labelImg.at<uchar>(neighbor) = labelvalue[0];
-                                pointStack.push(neighbor);
-                            }
+                            labelvalue[0]++; //不断将标签数加一
+                            seed = Point(j, i);// Point坐标
+                            labelImg.at<uchar>(seed) = labelvalue[0];//标签
+                            pointStack.push(seed);//将像素seed压入栈，增加数据
 
-                            neighbor = Point(seed.x + 1, seed.y);//右像素
-                            if ((seed.x != (cols - 1))
-                                    && (labelImg.at<uchar>(neighbor) == 255))
+                            while (!pointStack.empty())//死循环，直到堆栈为空
                             {
-                                labelImg.at<uchar>(neighbor) = labelvalue[0];
-                                pointStack.push(neighbor);
-                            }
+                                neighbor = Point(seed.x - 1, seed.y);//左像素
+                                if ((seed.x != 0)
+                                        && (labelImg.at<uchar>(neighbor) == 255))
+                                {
+                                    labelImg.at<uchar>(neighbor) = labelvalue[0];
+                                    pointStack.push(neighbor);
+                                }
 
-                            neighbor = Point(seed.x, seed.y - 1);//上像素
-                            if ((seed.y != 0)
-                                    && (labelImg.at<uchar>(neighbor) == 255))
-                            {
-                                labelImg.at<uchar>(neighbor) = labelvalue[0];
-                                pointStack.push(neighbor);
-                            }
+                                neighbor = Point(seed.x + 1, seed.y);//右像素
+                                if ((seed.x != (cols - 1))
+                                        && (labelImg.at<uchar>(neighbor) == 255))
+                                {
+                                    labelImg.at<uchar>(neighbor) = labelvalue[0];
+                                    pointStack.push(neighbor);
+                                }
 
-                            neighbor = Point(seed.x, seed.y + 1);//下像素
-                            if ((seed.y != (rows - 1))
-                                    && (labelImg.at<uchar>(neighbor) == 255))
-                            {
-                                labelImg.at<uchar>(neighbor) = labelvalue[0];
-                                pointStack.push(neighbor);
+                                neighbor = Point(seed.x, seed.y - 1);//上像素
+                                if ((seed.y != 0)
+                                        && (labelImg.at<uchar>(neighbor) == 255))
+                                {
+                                    labelImg.at<uchar>(neighbor) = labelvalue[0];
+                                    pointStack.push(neighbor);
+                                }
+
+                                neighbor = Point(seed.x, seed.y + 1);//下像素
+                                if ((seed.y != (rows - 1))
+                                        && (labelImg.at<uchar>(neighbor) == 255))
+                                {
+                                    labelImg.at<uchar>(neighbor) = labelvalue[0];
+                                    pointStack.push(neighbor);
+                                }
+                                seed = pointStack.top();
+
+                                //  获取堆栈上的顶部像素并将其标记为相同的标签
+                                pointStack.pop();//弹出栈顶像素
                             }
-                            seed = pointStack.top();
-                          
-                            //  获取堆栈上的顶部像素并将其标记为相同的标签
-                            pointStack.pop();//弹出栈顶像素
                         }
                     }
                 }
-            }
 
-            imshow("labelImg", labelImg);
+                imshow("labelImg", labelImg);
 
-            //筛选出框定区域内只喊两个连通域的外接矩形，排除错误匹配
-            if(labelvalue[0] == 2)
-            {               
-                if(abs(initLightBlocks[i].center.y-initLightBlocks[j].center.y)<
-                        0.5*abs(initLightBlocks[i].center.x-initLightBlocks[j].center.x))
+                //筛选出框定区域内只喊两个连通域的外接矩形，排除错误匹配
+                if(labelvalue[0] == 2)
                 {
-                    finalLightBlocks.push_back(initLightBlocks[i]);
-                    finalLightBlocks.push_back(initLightBlocks[j]);
-                    vector<Point> armourPoints;
-                    if(finalLightBlocks.size() != 0)
+                    if(abs(initLightBlocks[i].center.y-initLightBlocks[j].center.y)<
+                            0.5*abs(initLightBlocks[i].center.x-initLightBlocks[j].center.x))
                     {
-                        Point2f lightPoints[finalLightBlocks.size()][4];
-                        for(unsigned int m = 0; m < finalLightBlocks.size(); m++)
+                        finalLightBlocks.push_back(initLightBlocks[i]);
+                        finalLightBlocks.push_back(initLightBlocks[j]);
+                        vector<Point> armourPoints;
+                        if(finalLightBlocks.size() != 0)
                         {
-                            finalLightBlocks[m].points(lightPoints[m]);
-                            for(unsigned int n = 0; n < 4; n++)
+                            Point2f lightPoints[finalLightBlocks.size()][4];
+                            for(unsigned int m = 0; m < finalLightBlocks.size(); m++)
                             {
-                                armourPoints.push_back(lightPoints[m][n]);
+                                finalLightBlocks[m].points(lightPoints[m]);
+                                for(unsigned int n = 0; n < 4; n++)
+                                {
+                                    armourPoints.push_back(lightPoints[m][n]);
+                                }
                             }
                         }
-                    }
 
-                    if(armourPoints.size()>4)
-                    {
-                        RotatedRect minRotatedRect = minAreaRect(armourPoints);
-                        initArmourBlock.push_back(minRotatedRect);
-                    }
+                        if(armourPoints.size()>4)
+                        {
+                            RotatedRect minRotatedRect = minAreaRect(armourPoints);
+                            initArmourBlock.push_back(minRotatedRect);
+                        }
 
-                    finalLightBlocks.clear();
-                    armourPoints.clear();
+                        finalLightBlocks.clear();
+                        armourPoints.clear();
+                    }
+                    return initArmourBlock;
                 }
-                return initArmourBlock;
             }
         }
     }

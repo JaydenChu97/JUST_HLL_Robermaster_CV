@@ -73,7 +73,7 @@ public:
     * @return null
     * @note 计算的坐标原点为图像几何中心，建立笛卡尔坐标系
     */
-    void writeBytes(const cv::Rect2d& armourBlock, const cv::Mat& resizeFrame);
+    void writeBytes(const cv::Rect2d& armourBlock, const cv::Mat& resizeFrame, const bool& findArmourBlock);
 
 private:
     void convertCoord(const cv::Rect2d& armourBlock, const cv::Mat& resizeFrame,
