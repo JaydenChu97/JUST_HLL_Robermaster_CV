@@ -8,14 +8,14 @@
         <minArea> 20 </minArea>
         <maxHeightWidthRat> 8 </maxHeightWidthRat>
         <minHeightWidthRat> 1 </minHeightWidthRat>
-        <inRangePercent> 0.7 </inRangePercent>
-        <outRangePercent> 0.2 </outRangePercent>
+        <inRangePercent> 0.8 </inRangePercent>
+        <outRangePercent> 0.15 </outRangePercent>
         <armourPixelAvg> 60 </armourPixelAvg>
     </armour_detector>
 
     <!--摄像头参数-->
     <camera_parameter>
-        <brightness> -23 </brightness>
+        <brightness> 0 </brightness>
         <contrast> 9 </contrast>
         <hue> 4 </hue>
         <saturation> 60 </saturation>

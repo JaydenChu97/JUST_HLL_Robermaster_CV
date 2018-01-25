@@ -85,14 +85,14 @@ public:
     void threshProcess(Mat& framethreshold, Mat& hue, Mat& saturation, Mat& value);
 
     /**
-     * @brief 以H与S通道为辅助通道，轮廓面积对二值化图进行去噪处理
-     * @details 若绘制的团块轮廓上的点不存在H于S通道设置阈值内的点，则去除此团块
-     * @param[in] framethreshold 二值化图
-     * @param[in] hue H通道
-     * @param[in] saturation S通道
+     * @brief 区分敌我
+     * @details 利用团块轮廓RGB通道的R与B的像素比例进行区分敌我，并进行去噪
+     * @param[in] srcImage 原图像
+     * @param[in] framethreshold 二值化图     
      * @return null
      */
-    void wipePoints(const Mat& srcImage, Mat& framethreshold, Mat& hue, Mat& saturation);
+    void wipePoints(const Mat& srcImage,
+                    Mat& framethreshold);
 
     /**
     * @brief 设置预处理图像阈值

@@ -203,7 +203,7 @@ vector<RotatedRect> ArmourDetector::calcBlocksInfo(const vector<vector<Point> >&
 vector<RotatedRect> ArmourDetector::extracArmourBlocks(const vector<RotatedRect>& lampBlocks,
                                                        const Mat srcImage,
                                                        const Mat dstImage)
-{    
+{
     vector<RotatedRect> armourBlocks;
 
     //非空判定，如果为空的话在下面遍历的时候会出现一个bug，i-1溢出成2^32-1，使循环卡死
@@ -223,7 +223,7 @@ vector<RotatedRect> ArmourDetector::extracArmourBlocks(const vector<RotatedRect>
                     > 0.2*lampBlocks[j].boundingRect2f().area())
                         &&(lampBlocks[j].boundingRect2f().area()
                            > 0.2*lampBlocks[i].boundingRect2f().area()))
-                {                                                    
+                {
                     vector<RotatedRect> initLightBlocks;
                     initLightBlocks.push_back(lampBlocks[i]);
                     initLightBlocks.push_back(lampBlocks[j]);
@@ -249,7 +249,7 @@ vector<RotatedRect> ArmourDetector::extracArmourBlocks(const vector<RotatedRect>
 
                         vector<RotatedRect> finalLightBlocks;
 
-                        //外接正矩形连通域数量检测                        
+                        //外接正矩形连通域数量检测
                         vector<RotatedRect>initArmourBlocks = domainCountDetect(initLightBlocks,
                                                                               finalLightBlocks,
                                                                               dstImage);
@@ -354,7 +354,7 @@ void ArmourDetector::calcDeviation(vector<RotatedRect> initLightBlocks,
 vector<RotatedRect> ArmourDetector::domainCountDetect(const vector<RotatedRect> &initLightBlocks,
                                                       vector<RotatedRect> &finalLightBlocks,
                                                       const Mat& dstImage)
-{    
+{
 
     vector<RotatedRect> initArmourBlock;
 
@@ -385,7 +385,7 @@ vector<RotatedRect> ArmourDetector::domainCountDetect(const vector<RotatedRect> 
             int top = min(min(min(b1, b2), b3), b4) - 1;//上边界
             int bottom = max(max(max(b1, b2), b3), b4) + 1;//下边界
 
-            int labelvalue[1] = {0};           
+            int labelvalue[1] = {0};
             Point seed, neighbor;
             int rows = bottom;
             int cols = right;
@@ -525,16 +525,31 @@ void ArmourDetector::markArmourBlocks(const Mat& srcImage,
 
         bitwise_and(mask, invDstImage, mask);
 
-        Scalar armourBlockinRangePercent, armourBlockStdDev;
-        meanStdDev(srcImage, armourBlockinRangePercent, armourBlockStdDev, mask);
+        //计算矩形边长
+        double edge_1 = sqrt(pow((points[0].x - points[1].x), 2)
+                     + pow((points[0].y - points[1].y), 2));
+        double edge_2 = sqrt(pow((points[0].x - points[2].x), 2)
+                     + pow((points[0].y - points[2].y), 2));
+        double edge_3 = sqrt(pow((points[0].x - points[3].x), 2)
+                     + pow((points[0].y - points[3].y), 2));
 
-        double grade = sqrt((pow(armourBlockinRangePercent[0], 2)
-                     + pow(armourBlockinRangePercent[1], 2)
-                     + pow(armourBlockinRangePercent[2], 2))/3.0)
-                     + 5 * sqrt((pow(armourBlockStdDev[0], 2)
-                     + pow(armourBlockStdDev[1], 2)
-                     + pow(armourBlockStdDev[2], 2))/3.0);
-      
+        double shortEdge = min(min(edge_1, edge_2), edge_3);
+        double longEdge = edge_1 + edge_2 + edge_3
+                       - max(max(edge_1, edge_2), edge_3) -shortEdge;
+
+        Mat gray;
+        cvtColor(srcImage, gray, CV_BGR2GRAY);
+        Scalar armourBlockMean, armourBlockStdDev;
+
+        //计算平均值与方差
+        meanStdDev(gray, armourBlockMean, armourBlockStdDev, mask);
+
+        //cout<<"meanStdDev:"<<armourBlockStdDev[0]/armourBlockMean[0]<<"\t"
+        //<<"longEdge/shortEdge"<<longEdge/shortEdge<<endl;
+
+        //长宽比与离散系数乘积去除错误错误匹配并判别多辆车远近
+        double grade = (longEdge/shortEdge)*(armourBlockStdDev[0]/armourBlockMean[0]);
+
         //imshow("mask", mask);
 
         optimalArmourBlocks.push_back(OptimalArmourBlock(armourBlocks[id], grade));
@@ -619,3 +634,4 @@ void ArmourDetector::cutEdgeOfRect(Point2f* points)
     points[3] = rightPoints[0];
 }
 }
+

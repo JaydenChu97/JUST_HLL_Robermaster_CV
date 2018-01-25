@@ -153,9 +153,9 @@ private:
     * @param[in] dstImage 原二值化图像
     * @return 包围灯柱对即装甲板区域的最小旋转矩形数组
     */
-    vector<RotatedRect> extracArmourBlocks(const vector<RotatedRect>& lampBlocks,
-                                           const Mat srcImage,
-                                           const Mat dstImage);
+     vector<RotatedRect> extracArmourBlocks(const vector<RotatedRect>& lampBlocks,
+                        const Mat srcImage,
+                        const Mat dstImage);
 
     /**
      * @brief 根据灰度图计算甲板的区间范围的值
@@ -163,9 +163,9 @@ private:
      * @param[in] initLightBlocks 通过两灯柱初步信息检测所筛选出来的灯柱块
      * @param[in] srcImage 原彩色图像
      * @param[in] dstImage 原二值化图像
-     * @param[in] armourPixelAvg 像素的平均值
-     * @param[in] inRangePercent 设定区间范围内像素的平均值
-     * @param[in] outRangePercent 设定区间范围外像素的平均值
+     * @param[out] armourPixelAvg 像素的平均值
+     * @param[out] inRangePercent 设定区间范围内像素的平均值
+     * @param[out] outRangePercent 设定区间范围外像素的平均值
      * @return null
      */
     void calcDeviation(vector<RotatedRect> initLightBlocks,
@@ -183,13 +183,16 @@ private:
      * @param[in] finalLightBlocks 连通域数量检测后符合条件的矩形
      * @param[in] dstImgage 原二值化图像
      * @return 最后筛选出的甲板外接矩形
-     */    
+     */
     vector<RotatedRect> domainCountDetect(const vector<RotatedRect>& initLightBlocks,
                                           vector<RotatedRect>& finalLightBlocks,
                                           const Mat& dstImage);
 
     /**
     * @brief 对最后提取出的灯柱区域评分，选出最优区域
+    * @details 通过长宽比区分错误匹配与误判
+    *          通过灰度图离散系数确定多辆车时的远近，选择最近攻击目标
+    *          通过两变量乘积最小化极小值，获得最优攻击目标
     * @param[in] srcImage 待检测原图像
     * @param[in] dstImage 对原图像进行图像预处理后的图像
     * @param[in] armourBlocks 包围装甲板区域的最小旋转矩形数组
@@ -209,3 +212,4 @@ private:
 //! @}
 }
 #endif // ARMOUR_DETECTOR_H
+
