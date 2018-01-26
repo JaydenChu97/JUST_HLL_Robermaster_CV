@@ -160,7 +160,7 @@ private:
     /**
      * @brief 根据灰度图计算甲板的区间范围的值
      * @details 计算甲板像素平均值左右与大于某区间的像素比例
-     * @param[in] initLightBlocks 通过两灯柱初步信息检测所筛选出来的灯柱块
+     * @param[in] initLightBlocks 通过两灯柱初步信息检测所筛选出来的团块
      * @param[in] srcImage 原彩色图像
      * @param[in] dstImage 原二值化图像
      * @param[out] armourPixelAvg 像素的平均值
@@ -212,4 +212,5 @@ private:
 //! @}
 }
 #endif // ARMOUR_DETECTOR_H
+
 

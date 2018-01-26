@@ -74,25 +74,21 @@ public:
     /**
      * @brief 进行灯条的筛选，以V通道为主要通道，H与S通道为辅助通道构建二值化图
      * @details 在V通道中寻找团块坐标，将此坐标在H于S通道中处理
-     *          根据团块周围是否存在H通道阈值像素区分敌我
+     *          根据团块周围是否存在H通道阈值像素与R,B像素比例区分敌我
      *          根据团块周围是否存在S通道阈值像素去除背景
+     *          根据轮廓上像素在H通道情况去除背景
      * @param[in] framethreshold 储存二值化图像
      * @param[in] hue hue通道
      * @param[in] saturation saturation通道
      * @param[in] value value通道
      * @return null
      */
-    void threshProcess(Mat& framethreshold, Mat& hue, Mat& saturation, Mat& value);
+    void threshProcess(const Mat& srcImage,
+                       Mat& framethreshold,
+                       Mat& hue,
+                       Mat& saturation,
+                       Mat& value);
 
-    /**
-     * @brief 区分敌我
-     * @details 利用团块轮廓RGB通道的R与B的像素比例进行区分敌我，并进行去噪
-     * @param[in] srcImage 原图像
-     * @param[in] framethreshold 二值化图     
-     * @return null
-     */
-    void wipePoints(const Mat& srcImage,
-                    Mat& framethreshold);
 
     /**
     * @brief 设置预处理图像阈值

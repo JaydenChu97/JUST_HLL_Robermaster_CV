@@ -1,4 +1,4 @@
-#include "image_preprocessor.h"
+﻿#include "image_preprocessor.h"
 
 namespace HCVC {
 ImagePreprocessor::ImagePreprocessor()
@@ -33,8 +33,6 @@ Mat ImagePreprocessor::preprocess(const Mat& srcImage)
     hsvImages[1] = rangeThreshold(hsvImages[1], 1);
     hsvImages[2] = rangeThreshold(hsvImages[2], 2);
 
-    imshow("s", hsvImages[1]);
-
     Mat hue, saturation, value;
 
     //获取自定义核，核边长只能为奇数
@@ -50,25 +48,26 @@ Mat ImagePreprocessor::preprocess(const Mat& srcImage)
     //morphologyEx(saturation, saturation, MORPH_CLOSE, kernel_2);
 
     //中值滤波，去除S通道噪声点
-    medianBlur(hsvImages[0], hue, 5);
-    medianBlur(hsvImages[1],saturation,5);
+    medianBlur(hsvImages[0], hue, 9);
+    medianBlur(hsvImages[1], saturation,3);
     medianBlur(hsvImages[2], value, 5);
+
+    Mat kernel_1 = getStructuringElement(MORPH_RECT, Size(4,4));
+    morphologyEx(hue, hue, MORPH_CLOSE, kernel_1);
+    dilate(saturation, saturation, kernel_1);
 
     //初始化二值化图
     Mat framethreshold = Mat(value.size(), CV_8UC1,Scalar(0));
 
-    //根据三个通道初步绘制二值化图
-    threshProcess(framethreshold, hue, saturation, value);
+    //根据三个通道绘制二值化图
+    threshProcess(srcImage, framethreshold, hue, saturation, value);
 
     //中值滤波去除噪声点，同时使灯柱边缘润滑
-    medianBlur(framethreshold, framethreshold,3);
-
-    //根据团块外接轮廓的R,B比例区分敌我
-    wipePoints(srcImage, framethreshold);
+    medianBlur(framethreshold, framethreshold,3);    
 
     //水平,竖直方向连接一些断开的团块，防止运动模糊产生重影
-    Mat kernel_3 = getStructuringElement(MORPH_RECT, Size(4,4));
-    morphologyEx(framethreshold, framethreshold, MORPH_CLOSE, kernel_3);    
+    Mat kernel_2 = getStructuringElement(MORPH_RECT, Size(4,4));
+    morphologyEx(framethreshold, framethreshold, MORPH_CLOSE, kernel_2);
 
     //显示单通道处理后图像
     imshow("hImage", hue);
@@ -81,7 +80,8 @@ Mat ImagePreprocessor::preprocess(const Mat& srcImage)
     return framethreshold;
 }
 
-void ImagePreprocessor::threshProcess(Mat& framethreshold,
+void ImagePreprocessor::threshProcess(const Mat& srcImage,
+                                      Mat& framethreshold,
                                       Mat& hue,
                                       Mat& saturation,
                                       Mat& value)
@@ -93,96 +93,96 @@ void ImagePreprocessor::threshProcess(Mat& framethreshold,
     //轮廓的最小外接矩形
     vector<Rect> boundRect(contours.size());
 
-    for(unsigned int a = 0; a < contours.size(); a++)
+    if(contours.size() != 0 )
     {
-        boundRect[a] = boundingRect(contours[a]);
-
-        unsigned int huePixel = 0;
-        unsigned int saturationPixel = 0;
-        float left = boundRect[a].x - boundRect[a].width,
-              right = boundRect[a].x + 2*boundRect[a].width,
-              top = boundRect[a].y - boundRect[a].height/2,
-              bottom = boundRect[a].y + 2*boundRect[a].height/2;
-
-        //检测亮度通道团块在H与S通道周围像素情况，存在所设定阈值像素则判定为灯柱
-        if(left > 0 && right < framethreshold.cols
-                && top > 0 && bottom < framethreshold.rows)
+        for(unsigned int a = 0; a < contours.size(); a++)
         {
-            for(int i = top; i < bottom; i++)
+            boundRect[a] = boundingRect(contours[a]);
+
+            unsigned int huePixel = 0;
+            unsigned int saturationPixel = 0;
+            float left = boundRect[a].x - 6,
+                  right = boundRect[a].x + boundRect[a].width + 6,
+                  top = boundRect[a].y,
+                  bottom = boundRect[a].y + boundRect[a].height;
+
+            //检测亮度通道团块在H与S通道周围像素情况，存在所设定阈值像素则判定为灯柱
+            if(left > 0 && right < framethreshold.cols
+                    && top > 0 && bottom < framethreshold.rows)
             {
-                uchar* hueData = hue.ptr<uchar>(i);
-                uchar* saturationData = saturation.ptr<uchar>(i);
-                for(int j = left; j < right; j++)
+                for(int i = top; i < bottom; i++)
                 {
-                    if(hueData[j] == 255)
-                        huePixel++;
-                    if(saturationData[j] == 255)
-                        saturationPixel++;
+                    uchar* hueData = hue.ptr<uchar>(i);
+                    uchar* saturationData = saturation.ptr<uchar>(i);
+                    for(int j = left; j < right; j++)
+                    {
+                        if(hueData[j] == 255)
+                            huePixel++;
+                        if(saturationData[j] == 255)
+                            saturationPixel++;
+                    }
                 }
             }
-        }
 
-        //根据亮度图团块进行二值图的绘制
-        if(huePixel > 0)
-        {
-            for (unsigned int i = boundRect[a].y;
-                 i < boundRect[a].y + boundRect[a].height;
-                 i++)
+            //计算团块特征
+            float hueContourPixels = 0;
+            unsigned int contoursRedSum = 0;
+            unsigned int contoursBlueSum = 0;
+            unsigned int contoursArea = contourArea(contours[a], false);
+            boundRect[a] = boundingRect(contours[a]);
+            for(double b = 0; b < contours[a].size(); b++)
             {
-                uchar* valueData = value.ptr<uchar>(i);
-                uchar* framethresholdData = framethreshold.ptr<uchar>(i);
-                for (unsigned int j = boundRect[a].x;
-                     j < boundRect[a].x + boundRect[a].width;
-                     j++)
+                contoursRedSum += srcImage.at<Vec3b>(contours[a][b])[2];
+                contoursBlueSum += srcImage.at<Vec3b>(contours[a][b])[0];
+                if(hue.at<uchar>(contours[a][b]) == 255)
+                   hueContourPixels++;
+            }
+            unsigned int redAvg = contoursRedSum/contours[a].size();
+            unsigned int blueAvg = contoursBlueSum/contours[a].size();
+            cout<<"redAvg:"<<redAvg<<"\t"<<"blueAvg:"<<blueAvg<<endl;
+            cout<<"hueContourPixels:"<<hueContourPixels/contours[a].size()<<endl;
+
+            //根据亮度图团块进行二值图的绘制
+            if(huePixel > 0
+               && hueContourPixels/contours[a].size()>0.2
+               && contoursArea > 20
+               && redAvg > blueAvg
+               && saturationPixel > 0)
+            {
+                for (int i = boundRect[a].y;
+                     i < boundRect[a].y + boundRect[a].height;
+                     i++)
                 {
-                        if (valueData[j] == 255)
-                            framethresholdData[j] = 255;
+                    uchar* valueData = value.ptr<uchar>(i);
+                    uchar* framethresholdData = framethreshold.ptr<uchar>(i);
+                    for (int j = boundRect[a].x;
+                         j < boundRect[a].x + boundRect[a].width;
+                         j++)
+                    {
+                            if (valueData[j] == 255)
+                                framethresholdData[j] = 255;
+                    }
                 }
             }
-        }
-    }
-}
-
-void ImagePreprocessor::wipePoints(const Mat& srcImage,
-                                   Mat& framethreshold)
-{    
-    //对已经绘制好的灰度图进行除噪，通过轮廓上点是否存在所需颜色与饱和度像素，轮廓面积进行去噪
-    vector<vector<Point> >contours;
-    findContours(framethreshold, contours, CV_RETR_EXTERNAL, CV_CHAIN_APPROX_NONE);
-    vector<Rect> boundRect(contours.size());
-
-    for(unsigned int a=0; a<contours.size(); a++)
-    {        
-        unsigned int contoursRedSum = 0;
-        unsigned int contoursBlueSum = 0;
-
-        unsigned int contoursArea = contourArea(contours[a], false);
-        boundRect[a] = boundingRect(contours[a]);
-        for(int b = 0; b < contours[a].size(); b++)
-        {
-            Point outPoint;
-            outPoint = Point(contours[a][b].x, contours[a][b].y);            
-
-            contoursRedSum += srcImage.at<Vec3b>(outPoint)[2];
-            contoursBlueSum += srcImage.at<Vec3b>(outPoint)[0];
-        }
-
-        unsigned int redAvg = contoursRedSum/contours[a].size();
-        unsigned int blueAvg = contoursBlueSum/contours[a].size();
-        //cout<<"redAvg:"<<redAvg<<"\t"<<"blueAvg:"<<blueAvg<<endl;
-
-        //若不存在所需像素，则将像素变为黑色
-        if(contoursArea<10||(redAvg - blueAvg < 0))
-        {
-            for(unsigned int i = boundRect[a].y;
-                i < boundRect[a].y + boundRect[a].height
-                ; i++)
+            else if(huePixel > 0
+                    && hueContourPixels/contours[a].size()>0.2
+                    && contoursArea > 20
+                    && redAvg > blueAvg)
             {
-                uchar* framethresholdData = framethreshold.ptr<uchar>(i);
-                for (unsigned int j = boundRect[a].x;
-                     j < boundRect[a].x + boundRect[a].width;
-                     j++)
-                    framethresholdData[j] = 0;
+                for (int i = boundRect[a].y;
+                     i < boundRect[a].y + boundRect[a].height;
+                     i++)
+                {
+                    uchar* valueData = value.ptr<uchar>(i);
+                    uchar* framethresholdData = framethreshold.ptr<uchar>(i);
+                    for (int j = boundRect[a].x;
+                         j < boundRect[a].x + boundRect[a].width;
+                         j++)
+                    {
+                            if (valueData[j] == 255)
+                                framethresholdData[j] = 255;
+                    }
+                }
             }
         }
     }
