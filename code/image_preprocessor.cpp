@@ -43,6 +43,7 @@ Mat ImagePreprocessor::preprocess(const Mat& srcImage)
     //Mat kernel_2 = getStructuringElement(MORPH_RECT, Size(8,8));
 
     //开运算去除小的噪声点，闭运算连接断开部分，对H进行处理    
+
     //hsvImages[2].convertTo(value, CV_8UC1);
     //morphologyEx(hsvImages[0], hue, MORPH_OPEN,kernel_2);
     //morphologyEx(hue, hue, MORPH_CLOSE, kernel_1);
@@ -69,6 +70,7 @@ Mat ImagePreprocessor::preprocess(const Mat& srcImage)
     //水平,竖直方向连接一些断开的团块，防止运动模糊产生重影
     Mat kernel_3 = getStructuringElement(MORPH_RECT, Size(4,4));
     morphologyEx(framethreshold, framethreshold, MORPH_CLOSE, kernel_3);    
+
 
     //显示单通道处理后图像
     imshow("hImage", hue);
