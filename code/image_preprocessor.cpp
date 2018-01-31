@@ -32,15 +32,18 @@ Mat ImagePreprocessor::preprocess(const Mat& srcImage)
     hsvImages[0] = rangeThreshold(hsvImages[0], 0);
     hsvImages[1] = rangeThreshold(hsvImages[1], 1);
     hsvImages[2] = rangeThreshold(hsvImages[2], 2);
-    imshow("h",hsvImages[0]);
+
+    imshow("s", hsvImages[1]);
+
+    Mat hue, saturation, value;
 
     //获取自定义核，核边长只能为奇数
     //Mat erodeKernel = getStructuringElement(MORPH_RECT, Size(3, 3));
-    Mat kernel_1 = getStructuringElement(MORPH_RECT, Size(2,2));
-    Mat kernel_2 = getStructuringElement(MORPH_RECT, Size(8,8));
+    //Mat kernel_1 = getStructuringElement(MORPH_RECT, Size(2,2));
+    //Mat kernel_2 = getStructuringElement(MORPH_RECT, Size(8,8));
 
-    //开运算去除小的噪声点，闭运算连接断开部分，对H进行处理
-    Mat hue, saturation, value;
+    //开运算去除小的噪声点，闭运算连接断开部分，对H进行处理    
+
     //hsvImages[2].convertTo(value, CV_8UC1);
     //morphologyEx(hsvImages[0], hue, MORPH_OPEN,kernel_2);
     //morphologyEx(hue, hue, MORPH_CLOSE, kernel_1);
@@ -61,13 +64,13 @@ Mat ImagePreprocessor::preprocess(const Mat& srcImage)
     //中值滤波去除噪声点，同时使灯柱边缘润滑
     medianBlur(framethreshold, framethreshold,3);
 
+    //根据团块外接轮廓的R,B比例区分敌我
+    wipePoints(srcImage, framethreshold);
+
     //水平,竖直方向连接一些断开的团块，防止运动模糊产生重影
     Mat kernel_3 = getStructuringElement(MORPH_RECT, Size(4,4));
-    morphologyEx(framethreshold, framethreshold, MORPH_CLOSE, kernel_3);
+    morphologyEx(framethreshold, framethreshold, MORPH_CLOSE, kernel_3);    
 
-    //根据团块外接轮廓的H与S通道去噪
-    wipePoints(srcImage, framethreshold, hue, saturation);
-    //中值滤波
 
     //显示单通道处理后图像
     imshow("hImage", hue);
@@ -122,7 +125,7 @@ void ImagePreprocessor::threshProcess(Mat& framethreshold,
         }
 
         //根据亮度图团块进行二值图的绘制
-        if(huePixel > 0 && saturationPixel > 0)
+        if(huePixel > 0)
         {
             for (unsigned int i = boundRect[a].y;
                  i < boundRect[a].y + boundRect[a].height;
@@ -142,7 +145,8 @@ void ImagePreprocessor::threshProcess(Mat& framethreshold,
     }
 }
 
-void ImagePreprocessor::wipePoints(const Mat& srcImage,Mat& framethreshold, Mat& hue, Mat& saturation)
+void ImagePreprocessor::wipePoints(const Mat& srcImage,
+                                   Mat& framethreshold)
 {    
     //对已经绘制好的灰度图进行除噪，通过轮廓上点是否存在所需颜色与饱和度像素，轮廓面积进行去噪
     vector<vector<Point> >contours;
@@ -150,25 +154,16 @@ void ImagePreprocessor::wipePoints(const Mat& srcImage,Mat& framethreshold, Mat&
     vector<Rect> boundRect(contours.size());
 
     for(unsigned int a=0; a<contours.size(); a++)
-    {
-        float H_out[1] = {0};
-        float S_out[1] = {0};
+    {        
         unsigned int contoursRedSum = 0;
         unsigned int contoursBlueSum = 0;
 
-        //轮廓面积
-        float lightArea = contourArea(contours[a], false);
+        unsigned int contoursArea = contourArea(contours[a], false);
         boundRect[a] = boundingRect(contours[a]);
         for(int b = 0; b < contours[a].size(); b++)
         {
             Point outPoint;
-            outPoint = Point(contours[a][b].x, contours[a][b].y);
-            if(hue.at<uchar>(outPoint) == 255)
-            {
-                H_out[0]++;
-                if(saturation.at<uchar>(outPoint) == 255)
-                    S_out[0]++;
-            }
+            outPoint = Point(contours[a][b].x, contours[a][b].y);            
 
             contoursRedSum += srcImage.at<Vec3b>(outPoint)[2];
             contoursBlueSum += srcImage.at<Vec3b>(outPoint)[0];
@@ -176,15 +171,19 @@ void ImagePreprocessor::wipePoints(const Mat& srcImage,Mat& framethreshold, Mat&
 
         unsigned int redAvg = contoursRedSum/contours[a].size();
         unsigned int blueAvg = contoursBlueSum/contours[a].size();
-        cout<<"redAvg:"<<redAvg<<"\t"<<"blueAvg:"<<blueAvg<<endl;
+        //cout<<"redAvg:"<<redAvg<<"\t"<<"blueAvg:"<<blueAvg<<endl;
 
         //若不存在所需像素，则将像素变为黑色
-        if((H_out[0] == 0 && S_out[0] == 0)||(lightArea < 10)||blueAvg < redAvg)
+        if(contoursArea<10||(redAvg - blueAvg < 0))
         {
-            for(unsigned int i = boundRect[a].y; i < boundRect[a].y + boundRect[a].height; i++)
+            for(unsigned int i = boundRect[a].y;
+                i < boundRect[a].y + boundRect[a].height
+                ; i++)
             {
                 uchar* framethresholdData = framethreshold.ptr<uchar>(i);
-                for (unsigned int j = boundRect[a].x; j < boundRect[a].x + boundRect[a].width; j++)
+                for (unsigned int j = boundRect[a].x;
+                     j < boundRect[a].x + boundRect[a].width;
+                     j++)
                     framethresholdData[j] = 0;
             }
         }
