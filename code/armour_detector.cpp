@@ -185,16 +185,20 @@ vector<RotatedRect> ArmourDetector::calcBlocksInfo(const vector<vector<Point> >&
     for(unsigned int i = 0; i < blocks.size(); i++)
     {
         RotatedRect minRotatedRect = minAreaRect(blocks[i]);
-            if(minRotatedRect.size.area() > params.minArea
-            &&((//minRotatedRect.angle > -params.angleRange
-              ((minRotatedRect.size.height/minRotatedRect.size.width >= params.minHeightWidthRat)
-                &&(minRotatedRect.size.height/minRotatedRect.size.width <= params.maxHeightWidthRat)))
-             ||(//minRotatedRect.angle < params.angleRange-90
-               ((minRotatedRect.size.width/minRotatedRect.size.height >= params.minHeightWidthRat)
-                &&(minRotatedRect.size.width/minRotatedRect.size.height <= params.maxHeightWidthRat)))))
+
+        if(minRotatedRect.size.area() > params.minArea)
+        {
+            if(minRotatedRect.angle > -45)
             {
-                lampBlocks.push_back(minRotatedRect);
+                if(minRotatedRect.size.height/minRotatedRect.size.width > params.minHeightWidthRat)
+                   lampBlocks.push_back(minRotatedRect);
             }
+            else
+            {
+                if(minRotatedRect.size.width/minRotatedRect.size.height > params.minHeightWidthRat)
+                    lampBlocks.push_back(minRotatedRect);
+            }
+        }
     }
 
     return lampBlocks;
@@ -217,52 +221,54 @@ vector<RotatedRect> ArmourDetector::extracArmourBlocks(const vector<RotatedRect>
         for(unsigned int j = i + 1; j < lampBlocks.size(); j++)
         {
             if(abs(lampBlocks[i].center.y - lampBlocks[j].center.y) <
-                    0.7*abs(lampBlocks[i].center.x-lampBlocks[j].center.x))
+                    0.58*abs(lampBlocks[i].center.x-lampBlocks[j].center.x))
             {
-                if(abs(lampBlocks[i].angle-lampBlocks[j].angle) < params.angleRange
-                        ||abs(lampBlocks[i].angle-lampBlocks[j].angle) >180 - params.angleRange)
+                float angleI = min(abs(lampBlocks[i].angle), 90 - abs(lampBlocks[i].angle));
+                float angleJ = min(abs(lampBlocks[j].angle), 90 - abs(lampBlocks[j].angle));
+                if(abs(angleI - angleJ) < params.angleRange)
                 {
-                    if((lampBlocks[i].boundingRect2f().area()
-                        > 0.2*lampBlocks[j].boundingRect2f().area())
-                            &&(lampBlocks[j].boundingRect2f().area()
-                               > 0.2*lampBlocks[i].boundingRect2f().area()))
+                    if((lampBlocks[i].boundingRect2f().area()>
+                        0.2*lampBlocks[j].boundingRect2f().area())
+                            &&(lampBlocks[j].boundingRect2f().area()>
+                               0.2*lampBlocks[i].boundingRect2f().area()))
                     {
                         vector<RotatedRect> initLightBlocks;
                         initLightBlocks.push_back(lampBlocks[i]);
                         initLightBlocks.push_back(lampBlocks[j]);
 
                         //计算甲板区间范围内的像素比例
-                        double armourPixelAvg, inRangePercent, outRangePercent;
+                        double armourPixelAvg, variance, inRangePercent, outRangePercent;
                         calcDeviation(initLightBlocks,
                                       srcImage,dstImage,
                                       armourPixelAvg,
+                                      variance,
                                       inRangePercent,
                                       outRangePercent);
 
-                        float product = pow(1/(4*outRangePercent)*inRangePercent,2);
+                        //float product = pow(1/(4*outRangePercent)*inRangePercent,2);
 
                         //根据像素的离散程度再次筛选甲板
                         if(inRangePercent > params.inRangePercent
                                 &&outRangePercent < params.outRangePercent
                                 &&armourPixelAvg < params.armourPixelAvg)
                         {
-                            cout<<"inRangePercent:"<<inRangePercent<<"\t"
-                               <<"outRangePercent:"<<outRangePercent<<"\t"
-                              <<"armourPixelAvg:"<<armourPixelAvg<<endl;
+
+//                            cout<<"inRangePercent:"<<inRangePercent<<"\t"
+//                              <<"outRangePercent:"<<outRangePercent<<"\t"
+//                             <<"armourPixelAvg:"<<armourPixelAvg<<"\t"
+//                            <<"variance:"<<variance<<endl;
 
                             vector<RotatedRect> finalLightBlocks;
 
                             //外接正矩形连通域数量检测
-                            vector<RotatedRect>initArmourBlocks = domainCountDetect(initLightBlocks,
-                                                                                  finalLightBlocks,
-                                                                                  dstImage);
+                            vector<RotatedRect>initArmourBlocks =
+                                    domainCountDetect(initLightBlocks, finalLightBlocks, dstImage);
 
                             if(initArmourBlocks.size() != 0)
                             {
                                 for(unsigned int k=0; k < initArmourBlocks.size(); k++)
                                 {
                                     armourBlocks.push_back(initArmourBlocks[k]);
-                                    initArmourBlocks.clear();
                                 }
                             }
                        }
@@ -279,6 +285,7 @@ void ArmourDetector::calcDeviation(vector<RotatedRect> initLightBlocks,
                                    const Mat& srcImage,
                                    const Mat& dstImage,
                                    double& armourPixelAvg,
+                                   double& variance,
                                    double& inRangePercent,
                                    double& outRangePercent)
 {
@@ -288,10 +295,11 @@ void ArmourDetector::calcDeviation(vector<RotatedRect> initLightBlocks,
     Mat framethreshold=dstImage.clone();
 
     double sum=0;//像素值的总和
-    double armourPixelCount[1] = { 0 };//甲板像素数量
-    double armourRangPixel[1] = { 0 };//所需区间内像素
-    double notArmourRangPixel[1] = { 0 };//远离甲板平均值像素
+    double armourPixelCount = 0;//甲板像素数量
+    double armourRangPixel = 0;//所需区间内像素
+    double notArmourRangPixel = 0;//远离甲板平均值像素
     armourPixelAvg = 0;//像素的平均值
+    variance = 0;//甲板像素方差
     inRangePercent = 0;//区间范围内像素所占比例
     outRangePercent = 0;//区间外像素所占比例
 
@@ -325,31 +333,33 @@ void ArmourDetector::calcDeviation(vector<RotatedRect> initLightBlocks,
                         if (framethresholdData[j] == 0)//非灯条像素
                         {
                             sum += grayData[j];
-                            armourPixelCount[0]++;
+                            armourPixelCount++;
                         }
                     }
                 }
-                 armourPixelAvg = sum/armourPixelCount[0];
+                 armourPixelAvg = sum/armourPixelCount;
 
                  //求甲板像素给定区间范围内与外像素值
-                 int range = (int)armourPixelAvg;
+                 int range = (floor(armourPixelAvg)+ceil(armourPixelAvg))/2;
                  for (unsigned int i = top; i < bottom; i++)
                  {
                      uchar* grayData = gray.ptr<uchar>(i);
                      uchar* framethresholdData = framethreshold.ptr<uchar>(i);//二值化图像素
                      for (unsigned int j = left; j < right; j++)
                      {
-                         if (framethresholdData[j] == 0)
+                         if (framethresholdData[j] == 0)//非灯条像素
                          {
+                             variance += pow(grayData[j]-armourPixelAvg, 2);
                              if (grayData[j] < range + 10 && grayData[j] > range - 10)
-                                 armourRangPixel[0]++;
+                                 armourRangPixel++;
                              if (grayData[j] > range + 15)
-                                 notArmourRangPixel[0]++;
+                                 notArmourRangPixel++;
                          }
                      }
                  }
-                 inRangePercent = armourRangPixel[0] / armourPixelCount[0];
-                 outRangePercent=notArmourRangPixel[0] / armourPixelCount[0];
+                 variance = variance/armourPixelCount;
+                 inRangePercent = armourRangPixel / armourPixelCount;
+                 outRangePercent=notArmourRangPixel / armourPixelCount;
             }
         }
     }
@@ -468,9 +478,7 @@ vector<RotatedRect> ArmourDetector::domainCountDetect(const vector<RotatedRect> 
                             {
                                 finalLightBlocks[m].points(lightPoints[m]);
                                 for(unsigned int n = 0; n < 4; n++)
-                                {
                                     armourPoints.push_back(lightPoints[m][n]);
-                                }
                             }
                         }
 
@@ -524,19 +532,10 @@ void ArmourDetector::markArmourBlocks(const Mat& srcImage,
         //多边形填充
         fillConvexPoly(mask, pts, npts, Scalar(255));
 
-        bitwise_and(mask, invDstImage, mask);
+        bitwise_and(mask, invDstImage, mask);        
 
-        //计算矩形边长
-        double edge_1 = sqrt(pow((points[0].x - points[1].x), 2)
-                     + pow((points[0].y - points[1].y), 2));
-        double edge_2 = sqrt(pow((points[0].x - points[2].x), 2)
-                     + pow((points[0].y - points[2].y), 2));
-        double edge_3 = sqrt(pow((points[0].x - points[3].x), 2)
-                     + pow((points[0].y - points[3].y), 2));
-
-        double shortEdge = min(min(edge_1, edge_2), edge_3);
-        double longEdge = edge_1 + edge_2 + edge_3
-                       - max(max(edge_1, edge_2), edge_3) -shortEdge;
+        double shortEdge = min(armourBlocks[id].size.height, armourBlocks[id].size.width);
+        double longEdge = max(armourBlocks[id].size.height, armourBlocks[id].size.width);
 
         Mat gray;
         cvtColor(srcImage, gray, CV_BGR2GRAY);
@@ -545,11 +544,12 @@ void ArmourDetector::markArmourBlocks(const Mat& srcImage,
         //计算平均值与方差
         meanStdDev(gray, armourBlockMean, armourBlockStdDev, mask);
 
-        //cout<<"meanStdDev:"<<armourBlockStdDev[0]/armourBlockMean[0]<<"\t"
-        //<<"longEdge/shortEdge"<<longEdge/shortEdge<<endl;
+//        cout<<"meanStdDev:"<<armourBlockStdDev[0]/armourBlockMean[0]<<"\t"
+//        <<"longEdge/shortEdge"<<longEdge/shortEdge<<endl;
 
         //长宽比与离散系数乘积去除错误错误匹配并判别多辆车远近
-        double grade = (longEdge/shortEdge)*(armourBlockStdDev[0]/armourBlockMean[0]);
+        double grade = (longEdge/shortEdge)/5*sin(90 - abs(armourBlocks[id].angle))
+                *(armourBlockStdDev[0]/armourBlockMean[0]);
 
         //imshow("mask", mask);
 

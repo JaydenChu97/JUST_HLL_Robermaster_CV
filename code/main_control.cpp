@@ -62,6 +62,10 @@ bool MainControl::readSrcFile(int cameraId)
 
 void MainControl::run(const string& path)
 {
+    clock_t start, end;
+
+      start = clock();
+
     //读取源文件
     if(path == "camera")
     {
@@ -80,10 +84,11 @@ void MainControl::run(const string& path)
     namedWindow(srcFilePath, WINDOW_FULLSCREEN);
 
     //添加滑动控制条
-    //Tool::addTrackBar(srcFilePath, srcFile);
+    //Tool::addTrackBar(srcFilePath, srcFile);    
 
     //视频图像缓存区域
     Mat frame;
+    int currentFrame = 0;
     while(true)
     {
         //添加运行时间统计
@@ -95,6 +100,8 @@ void MainControl::run(const string& path)
 
         //读取一帧图像
         srcFile >> frame;
+        currentFrame++;
+
         //视频播放完毕跳出程序
         if(frame.empty())
         {
@@ -115,7 +122,7 @@ void MainControl::run(const string& path)
         {
             armourBlock = armourDetector.getBestArmourBlock();
             armourTracker.init(resizeFrame, armourBlock);
-            status = TRACKING;
+            //status = TRACKING;
             findArmourBlock = true;
         }
 
@@ -140,7 +147,11 @@ void MainControl::run(const string& path)
         imshow(srcFilePath, resizeFrame);
     }
 
+    end = clock();
+    cout<<"Run time: "<<(double)(end - start) / CLOCKS_PER_SEC<<"S"<<endl;
+
     destroyAllWindows();
+
 }
 }
 

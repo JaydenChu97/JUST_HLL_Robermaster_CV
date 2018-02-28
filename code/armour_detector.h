@@ -172,6 +172,7 @@ private:
                        const Mat& srcImage,
                        const Mat& dstImage,
                        double& armourPixelAvg,
+                       double& variance,
                        double& inRangePercent,
                        double& outRangePercent);
 
