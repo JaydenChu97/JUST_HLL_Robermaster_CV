@@ -1,0 +1,12 @@
+INPUT(
+./release\armour_detector.o
+./release\armour_tracker.o
+./release\image_preprocessor.o
+./release\main_control.o
+./release\mainwindow.o
+./release\tool.o
+./release\main.o
+./release\serial.o
+./release\moc_mainwindow.o
+./release\moc_serial.o
+);

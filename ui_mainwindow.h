@@ -87,6 +87,7 @@ public:
     QMenuBar *menuBar;
     QToolBar *mainToolBar;
     QStatusBar *statusBar;
+    QToolBar *toolBar;
 
     void setupUi(QMainWindow *MainWindow)
     {
@@ -425,6 +426,9 @@ public:
         statusBar = new QStatusBar(MainWindow);
         statusBar->setObjectName(QStringLiteral("statusBar"));
         MainWindow->setStatusBar(statusBar);
+        toolBar = new QToolBar(MainWindow);
+        toolBar->setObjectName(QStringLiteral("toolBar"));
+        MainWindow->addToolBar(Qt::TopToolBarArea, toolBar);
 
         retranslateUi(MainWindow);
 
@@ -453,6 +457,7 @@ public:
         label_3->setText(QApplication::translate("MainWindow", "\345\214\272\351\227\264\345\206\205\345\203\217\347\264\240\346\257\224", Q_NULLPTR));
         label_4->setText(QApplication::translate("MainWindow", "\345\214\272\351\227\264\345\244\226\345\203\217\347\264\240\346\257\224", Q_NULLPTR));
         label_5->setText(QApplication::translate("MainWindow", "\347\224\262\346\235\277\345\203\217\347\264\240\345\235\207\345\200\274", Q_NULLPTR));
+        toolBar->setWindowTitle(QApplication::translate("MainWindow", "toolBar", Q_NULLPTR));
     } // retranslateUi
 
 };
