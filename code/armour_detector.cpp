@@ -635,5 +635,3 @@ void ArmourDetector::cutEdgeOfRect(Point2f* points)
     points[3] = rightPoints[0];
 }
 }
-
-

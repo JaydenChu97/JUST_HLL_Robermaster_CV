@@ -47,6 +47,11 @@ Mat ImagePreprocessor::preprocess(const Mat& srcImage)
     dilate(hue, hue, kernel_2);
     dilate(saturation, saturation, kernel_2);
 
+    //中值滤波，去除S通道噪声点
+    medianBlur(hsvImages[0], hue, 5);
+    medianBlur(hsvImages[1],saturation,5);
+    medianBlur(hsvImages[2], value, 5);
+
     //初始化二值化图
     Mat framethreshold = Mat(value.size(), CV_8UC1,Scalar(0));
 

@@ -213,5 +213,3 @@ private:
 //! @}
 }
 #endif // ARMOUR_DETECTOR_H
-
-
