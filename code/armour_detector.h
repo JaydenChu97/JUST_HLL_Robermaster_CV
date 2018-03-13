@@ -173,6 +173,7 @@ private:
     * @param[out] standard 最终检测出的装甲板的标准差
     * @return null
     */
+
     void extracArmourBlocks(RotatedRect* armourBlocks,
                             const RotatedRect* lampBlocks,
                             const Mat srcImage,
@@ -219,6 +220,7 @@ private:
                        const Mat& srcImage,
                        const Mat& dstImage,
                        double& armourPixelAvg,
+                       double& variance,
                        double& inRangePercent,
                        double& outRangePercent,
                        double& armourStandard);

@@ -65,6 +65,31 @@ bool ArmourTracker::track(Mat srcImage)
     if(tracker->update(srcImage, armourBlock) == false)
     {
        return false;
+    }    
+
+    //获取个性后矩形框的Mat形式，方便之后处理
+    updateRoi = srcImage(Rect(armourBlock.x, armourBlock.y, armourBlock.width, armourBlock.height));
+
+    //对矩形框进行矫正，获取其最小外接矩形
+    Rect2d minBoundRect = refineRect(updateRoi, srcImage);
+
+    //调整矩形框大小
+    //Size dsize = Size(128,64);
+    //resize(updateRoi, updateRoi, dsize, CV_32FC1);
+    imshow("updateRoi", updateRoi);
+
+    Rect region = armourBlock;
+
+    //对越界矩形边界进行纠正
+    if (armourBlock.x < 0){armourBlock.x = 0;armourBlock.width += region.x;}
+    if (armourBlock.x + armourBlock.width > srcImage.cols)
+    {
+        armourBlock.width = srcImage.cols - region.x;
+    }
+    if (armourBlock.y < 0){armourBlock.y = 0;armourBlock.height += region.y;};
+    if ( armourBlock.y + armourBlock.height > srcImage.rows)
+    {
+        armourBlock.height = srcImage.rows - region.y;
     }
 
     correctBorders(armourBlock, srcImage);
@@ -635,7 +660,7 @@ RotatedRect ArmourTracker::getArmourRotated(RotatedRect* matchDomains, int match
 {
     RotatedRect armourRotated;
     vector<Point> armourPoints;
-
+  
     for(unsigned int i = 0; i < matchSize; i++)
     {
         Point2f lightPoints[4];
@@ -682,9 +707,7 @@ void ArmourTracker::fourierTransform(Mat& src)
     //而低值为黑点，高低值的变化无法有效分辨。为了在屏幕上凸显出高低变化的连续性，我们可以用对数尺度来替换线性尺度:
     magI+= 1;
     log(magI,magI);//取对数
-    magI= magI(Rect(0,0,src_gray.cols,src_gray.rows));//前边对原始图像进行了扩展，
-                                                      //这里把对原始图像傅里叶变换取出，剔除扩展部分。
-
+    magI= magI(Rect(0,0,src_gray.cols,src_gray.rows));//前边对原始图像进行了扩展，                                                      //这里把对原始图像傅里叶变换取出，剔除扩展部分。
 
     //这一步的目的仍然是为了显示。 现在我们有了重分布后的幅度图，
     //但是幅度值仍然超过可显示范围[0,1] 。我们使用 normalize() 函数将幅度归一化到可显示范围。
