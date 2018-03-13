@@ -64,7 +64,7 @@ void MainControl::run(const string& path)
 {
     clock_t start, end;
 
-      start = clock();
+    start = clock();
 
     //读取源文件
     if(path == "camera")
@@ -122,7 +122,7 @@ void MainControl::run(const string& path)
         {
             armourBlock = armourDetector.getBestArmourBlock();
             armourTracker.init(resizeFrame, armourBlock);
-            //status = TRACKING;
+            status = TRACKING;
             findArmourBlock = true;
         }
 

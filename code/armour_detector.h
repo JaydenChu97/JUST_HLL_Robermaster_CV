@@ -67,15 +67,29 @@ public:
     Rect2d getBestArmourBlock() const;
 
     /**
-    * @brief 在原图像上画出旋转矩形，便于调试
+    * @brief 在原图像上画出类型为vector旋转矩形，便于调试
     * @param[in] srcImage 待检测原图像
     * @param[in] minRotatedRects 需要画出的全部旋转矩形
     * @param[in] color 线条颜色
     * @return null
     */
-    void drawBlocks(Mat srcImage,
-                    const vector<RotatedRect>& minRotatedRects,
-                    const Scalar& color) const;
+    void drawVectorBlocks(Mat srcImage,
+                          const vector<RotatedRect>& minRotatedRects,
+                          const Scalar& color) const;
+
+    /**
+     * @brief 在原图上画出类型为array的旋转矩形
+     * @param[in] srcImage 待检测原图像
+     * @param[in] minRotatedRects 类型为数组的最小外接矩形
+     * @param[in] lampsNum minRotatedRects的数组长度
+     * @param[in] armoursNum minRotatedRects的实际数量
+     * @param[in] color 矩形框的颜色
+     */
+    void drawArrayBlocks(Mat srcImage,
+                         const RotatedRect* minRotatedRects,
+                         int lampsNum,
+                         int armoursNum,
+                         const Scalar& color) const;
 
     //! 装甲板判定参数
     struct Params
@@ -139,28 +153,61 @@ private:
     /**
     * @brief 计算每一个团块的信息，并进行初步的筛选即去除掉一些不符合条件的团块
     * @param[in] blocks 团块点的集合
+    * @param[out] lampsNum 初步检测最小外接矩形的实际数量
     * @return 包围团块的最小旋转矩形数组
     */
-    vector<RotatedRect> calcBlocksInfo(const vector<vector<Point> >& blocks);
+    vector<RotatedRect> calcBlocksInfo(const vector<vector<Point> >& blocks, int& lampsNum);
 
     /**
     * @brief 进一步筛选，多个灯柱与甲板进行处理,最后存入armourBlocks
     * @details 分为两灯柱初步信息检测，甲板像素离散度检测与灯柱减连通域数量检测
     *          运用两个灯柱的信息计算甲板像素离散程度，
     *          计算两灯柱框定区域内连通域数量以检测确定甲板
+    * @param[out] armourBlocks 包围装甲板的旋转矩形
     * @param[in] lampBlocks 通过单个灯柱信息筛选所确立的灯柱团块
     * @param[in] srcImage 原彩色图像
     * @param[in] dstImage 原二值化图像
-    * @return 包围灯柱对即装甲板区域的最小旋转矩形数组
+    * @param[in] lampsNum 初步检测最小外接矩形的实际数量,armourBlocks数组的数量
+    * @param[out] armoursNum 装甲板检测后获得的装甲板数量
+    * @param[out] average 最终检测出的装甲板的平均值
+    * @param[out] standard 最终检测出的装甲板的标准差
+    * @return null
     */
-     vector<RotatedRect> extracArmourBlocks(const vector<RotatedRect>& lampBlocks,
-                        const Mat srcImage,
-                        const Mat dstImage);
+    void extracArmourBlocks(RotatedRect* armourBlocks,
+                            const RotatedRect* lampBlocks,
+                            const Mat srcImage,
+                            const Mat dstImage,
+                            int lampsNum,
+                            int& armoursNum,
+                            double* average,
+                            double* standard);
+
+    /**
+     * @brief 连通域数量检测
+     * @details 求两灯柱外接矩形，检测矩形内的连通域，若连通域数量为2，
+     *          对此两灯柱块确定最小外接矩形并返回该灯柱团块
+     * @param[in] initLightBlocks 通过两灯柱初步信息检测所筛选出来的灯柱块
+     * @param[in] dstImgage 原二值化图像
+     * @param[in] lightNum initLightBlocks数组的长度
+     * @return null
+     */
+    void domainCountDetect(const RotatedRect* initLightBlocks,
+                           const Mat& dstImage,
+                           int& labelValue,
+                           int lightNum);
+
+    /**
+     * @brief 获得两团块的最小外接矩形
+     * @param[in] initLightBlocks 连通域筛选出来的团块
+     * @param[in] lightsNum initLightBlocks数组的长度
+     * @return 团块的最小外包围矩形
+     */
+    RotatedRect getArmourRotated(RotatedRect* initLightBlocks, int lightsNum);
 
     /**
      * @brief 根据灰度图计算甲板的区间范围的值
      * @details 计算甲板像素平均值左右与大于某区间的像素比例
-     * @param[in] initLightBlocks 通过两灯柱初步信息检测所筛选出来的团块
+     * @param[in] armourReserve 通过两灯柱初步信息检测所筛选出来的团块
      * @param[in] srcImage 原彩色图像
      * @param[in] dstImage 原二值化图像
      * @param[out] armourPixelAvg 像素的平均值
@@ -168,26 +215,13 @@ private:
      * @param[out] outRangePercent 设定区间范围外像素的平均值
      * @return null
      */
-    void calcDeviation(vector<RotatedRect> initLightBlocks,
+    void calcDeviation(RotatedRect armourReserve,
                        const Mat& srcImage,
                        const Mat& dstImage,
                        double& armourPixelAvg,
-                       double& variance,
                        double& inRangePercent,
-                       double& outRangePercent);
-
-    /**
-     * @brief 连通域数量检测
-     * @details 求两灯柱外接矩形，检测矩形内的连通域，若连通域数量为2，
-     *          对此两灯柱块确定最小外接矩形并返回该灯柱团块
-     * @param[in] initLightBlocks 通过两灯柱初步信息检测所筛选出来的灯柱块
-     * @param[in] finalLightBlocks 连通域数量检测后符合条件的矩形
-     * @param[in] dstImgage 原二值化图像
-     * @return 最后筛选出的甲板外接矩形
-     */
-    vector<RotatedRect> domainCountDetect(const vector<RotatedRect>& initLightBlocks,
-                                          vector<RotatedRect>& finalLightBlocks,
-                                          const Mat& dstImage);
+                       double& outRangePercent,
+                       double& armourStandard);
 
     /**
     * @brief 对最后提取出的灯柱区域评分，选出最优区域
@@ -197,11 +231,29 @@ private:
     * @param[in] srcImage 待检测原图像
     * @param[in] dstImage 对原图像进行图像预处理后的图像
     * @param[in] armourBlocks 包围装甲板区域的最小旋转矩形数组
+    * @param[in] lampsNum 初步检测最小外接矩形的实际数量,armourBlocks数组的数量
+    * @param[in] armoursNum 装甲板检测后获得的装甲板数量
+    * @param[in] average 最终检测出的装甲板的平均值
+    * @param[in] standard 最终检测出的装甲板的标准差
     * @return null
     */
     void markArmourBlocks(const Mat& srcImage,
                           const Mat& dstImage,
-                          const vector<RotatedRect>& armourBlocks);
+                          const RotatedRect* armourBlocks,
+                          int lampsNum,
+                          int armoursNum,
+                          double* average,
+                          double* standard);
+
+    /**
+     * @brief 对边界进行矫正
+     * @param[out] left 左边界
+     * @param[out] top 上边界
+     * @param[out] width 宽度
+     * @param[out] height 高度
+     * @return null;
+     */
+    void correctBorder(int& left, int& top, int& width, int& height, Mat image);
 
     /**
     * @brief 减去旋转矩形的边角，使旋转矩形的左右两条边与竖直方向平行，成为平行四边形
@@ -213,5 +265,3 @@ private:
 //! @}
 }
 #endif // ARMOUR_DETECTOR_H
-
-

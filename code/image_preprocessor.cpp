@@ -9,13 +9,13 @@ ImagePreprocessor::ImagePreprocessor()
     {
         cout << "Open file failed" << endl;
     }
-    FileNode node = fs["image_preprocessor_threshod"];
+    FileNode red_node = fs["red_image_preprocessor_threshod"];
     
     for(unsigned int i = 0; i < 3; i++)
     {
-        //cout << int(node[2*i]) << endl;
-        thresholds[i].push_back(int(node[2*i]));
-        thresholds[i].push_back(int(node[2*i+1]));
+        //cout << int(red_node[2*i]) << endl;
+        thresholds[i].push_back(int(red_node[2*i]));
+        thresholds[i].push_back(int(red_node[2*i+1]));
     }
 }
 
@@ -82,17 +82,18 @@ void ImagePreprocessor::threshProcess(const Mat& srcImage,
     findContours(value, contours, CV_RETR_EXTERNAL, CV_CHAIN_APPROX_NONE);
 
     //轮廓的最小外接矩形
-    vector<Rect> boundRect(contours.size());
-    vector<RotatedRect>rotatedRect(contours.size());
+    Rect boundRect[contours.size()];
+    RotatedRect rotatedRect[contours.size()];
 
     if(contours.size() != 0 )
     {
         for(unsigned int a = 0; a < contours.size(); a++)
         {
-            boundRect[a] = boundingRect(contours[a]);
             rotatedRect[a] = minAreaRect(contours[a]);
+            boundRect[a] = rotatedRect[a].boundingRect2f();
+
             if(boundRect[a].height < 9*boundRect[a].width
-                    && boundRect[a].height > boundRect[a].width)
+                    && boundRect[a].height > 0.8*boundRect[a].width)
             {
                 if(abs(rotatedRect[a].angle) < 30 || abs(rotatedRect[a].angle) > 60)
                 {
@@ -126,7 +127,7 @@ void ImagePreprocessor::threshProcess(const Mat& srcImage,
                     unsigned int contoursRedSum = 0;
                     unsigned int contoursBlueSum = 0;
                     unsigned int contoursArea = contourArea(contours[a], false);
-                    boundRect[a] = boundingRect(contours[a]);
+
                     for(double b = 0; b < contours[a].size(); b++)
                     {
                         contoursRedSum += srcImage.at<Vec3b>(contours[a][b])[2];

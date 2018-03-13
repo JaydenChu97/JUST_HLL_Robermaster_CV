@@ -4,13 +4,13 @@
 <opencv_storage>
     <!--灯柱筛选条件-->
     <armour_detector>
-        <angleRange> 15 </angleRange>
+        <angleRange> 20 </angleRange>
         <minArea> 15 </minArea>
         <maxHeightWidthRat> 9 </maxHeightWidthRat>
         <minHeightWidthRat> 0.8 </minHeightWidthRat>
-        <inRangePercent> 0.80 </inRangePercent>
-        <outRangePercent> 0.1 </outRangePercent>
-        <armourPixelAvg> 100 </armourPixelAvg>
+        <inRangePercent> 0.8 </inRangePercent>
+        <outRangePercent> 10 </outRangePercent>
+        <armourPixelAvg> 30 </armourPixelAvg>
     </armour_detector>
 
     <!--摄像头参数-->
@@ -18,7 +18,7 @@
         <brightness> 0 </brightness>
         <contrast> 12 </contrast>
         <hue> 4 </hue>
-        <saturation> 60 </saturation>
+        <saturation> 30 </saturation>
         <pan> 6 </pan>
         <gamma> 96 </gamma>
         <white_balance_red_v> 5400 </white_balance_red_v>
@@ -28,7 +28,7 @@
      </camera_parameter>
 
     <!--图像hsv三通道阈值参数-->
-    <image_preprocessor_threshod>
-        160 180 190 255 200 255
-    </image_preprocessor_threshod>
+    <red_image_preprocessor_threshod>
+        160 180 190 255 215 255
+    </red_image_preprocessor_threshod>
 </opencv_storage>

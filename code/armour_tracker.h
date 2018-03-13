@@ -103,31 +103,73 @@ public:
      * @param[in] rotatedSize rotatedRect数组的长度
      * @return null
      */
-    void searchmatchDomains(RotatedRect& minAreaRect, RotatedRect* rotatedRect, int rotatedSize);
+    void searchmatchDomains(RotatedRect& minAreaRect,
+                            RotatedRect* rotatedRect,
+                            int rotatedSize,
+                            int& boundNum);
+
+    /**
+     * @brief 对扩大后矩形区域与原矩形区域团块的单个筛选
+     * @param[in] blocks 原区域的团块
+     * @param[in] blockSize blocks数组的长度
+     * @param[out] clone 筛选后团块数组
+     * @param[in] cloneBlockNum clone数组的长度
+     * @return num clone数组的实际储存数量
+     */
+    int cloneScreen(RotatedRect* blocks, int blockSize, RotatedRect* clone, int cloneBlockNum);
 
     /**
      * @brief 对分类后单独的更新后矩形内完整矩形矩形筛选匹配
-     * @param[out] updateClone 通过单个矩形性质筛选出来的矩形框
-     * @param[in] updateBlocks 分类后的更新后矩形框内完整矩形
-     * @param[in] rotatedSize updateBlocks数组的长度
-     * @param[out] number updateClone数组内实际储存的矩形数量
+     * @param[in] updateClone 通过单个矩形性质筛选出来的更新后矩形框
+     * @param[in] updateNum updateClone数组内实际储存的矩形数量
+     * @param[in] updateBlockNum updateClone的数组长度
      * @return 最后筛选出来的包围两连通域的旋转矩形
      */
-    vector<RotatedRect> adjustScreen(RotatedRect* updateClone, RotatedRect* updateBlocks,
-                                     int rotatedSize, int number);
+    vector<RotatedRect> updateScreen(RotatedRect* updateClone, int updateNum, int updateBlockNum);
 
     /**
      * @brief 对第一类分类后未成功匹配与第二类分类的矩形进行匹配筛选
-     * @param[in] updateClone 通过单个矩形性质筛选出来的矩形框
-     * @param[in] number updateClone数组内实际储存的矩形数量
-     * @param[in] adjustBlocks 分类后除更新后矩形连通域的放大后矩形区域内的连通域外接矩形
-     * @param[in] saveRotatedSize adjustBlocks数组的长度
+     * @param[in] updateClone 通过单个矩形性质筛选出来的更新后矩形框
+     * @param[in] updateBlockNum updateBlockNum的数组长度
+     * @param[in] updateNum updateClone数组内实际储存的矩形数量
+     * @param[in] adjustClone 通过单个矩形筛选出来的扩大后矩形框
+     * @param[in] exceptNum adjustClone的数组长度
+     * @param[in] adjustNum adjustClone数组的长度
      * @return 最后筛选出来的包围两连通域的旋转矩形
      */
-    vector<RotatedRect> updateScreen(RotatedRect* updateClone, int number,
-                                     RotatedRect* adjustBlocks, int saveRotatedSize);
+    vector<RotatedRect> adjustScreen(RotatedRect* updateClone,
+                                     int updateBlockNum,
+                                     int updateNum,
+                                     RotatedRect* adjustClone,
+                                     int exceptNum,
+                                     int adjustNum);
 
+    /**
+     * @brief 对经过分类后筛选出数量大于2的连通域进行评分，选出最优矩
+     * @param[in] armours 筛选后数量大于2的装甲板
+     * @return 最优矩
+     */
     RotatedRect armourConfidence(vector<RotatedRect>& armours);
+
+    /**
+     * @brief 选出最优矩阵
+     * @param[in] appraiseArmour 经过连通域检测的数组
+     * @param[in] appraiseGrade 对应每个旋转矩形的分数
+     * @param[in] arrayNum 数组的长度
+     * @param[in] num 数组的实际数量
+     * @return 最优矩
+     */
+    RotatedRect sortArmour(RotatedRect* appraiseArmour,
+                           float* appraiseGrade,
+                           int arrayNum,
+                           unsigned int num);
+
+    /**
+     * @brief 对越界的矩形框矩形矫正
+     * @param[in] initRect 输入的矩形框
+     * @param[in] srcImage 原图像
+     */
+    void correctBorders(Rect2d& initRect, Mat& srcImage);
 
     /**
      * @brief 获取分类后筛选出来的两矩形框的外接矩形
@@ -147,15 +189,14 @@ private:
 
     //! 检测到的装甲板区域
     Rect2d armourBlock;
+    Rect2d initRect;            //初始矩形框
 
-    Mat feat;
     Mat roi;                    //检测的装甲板区域
     Mat updateRoi;              //更新后的检测框
     Mat adjustRoi;              //调整后检测的装甲板区域
     Mat updateValue;            //更新后的检测框V通道区域
     Mat adjustValue;            //调整后检装甲板区域V通道图
 
-    int size_patch[2];          // hog特征的sizeY，sizeX
     float initArmourLength;     //初始图像装甲板长度
     float gamma;                //初始灯条最小外接矩形的旋转角
 };
