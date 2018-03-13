@@ -15,12 +15,12 @@ void ArmourTracker::init(const Mat &srcImage, Rect2d armourBlock)
     param.compressed_size = 2;
     param.resize = true;
     param.pca_learning_rate = 1.9;
-    param.split_coeff = true;
-
+    //param.split_coeff = true;
 
     tracker = TrackerKCF::create(param);
 
     //获取检测结果传递图像的V通道图像
+    initRect = armourBlock;
     roi = srcImage(Rect(armourBlock.x, armourBlock.y, armourBlock.width, armourBlock.height));
     Mat initHSV;
     cvtColor(roi, initHSV, CV_BGR2HSV);
@@ -92,6 +92,25 @@ bool ArmourTracker::track(Mat srcImage)
         armourBlock.height = srcImage.rows - region.y;
     }
 
+    correctBorders(armourBlock, srcImage);
+
+    //获取个性后矩形框的Mat形式，方便之后处理
+    updateRoi = srcImage(Rect2d(armourBlock.x, armourBlock.y, armourBlock.width, armourBlock.height));
+
+    Rect2d minBoundRect;
+
+    if(3*armourBlock.area() > roi.cols*roi.rows)
+    //对矩形框进行矫正，获取其最小外接矩形
+        minBoundRect = refineRect(updateRoi, srcImage);
+
+    imshow("updateRoi", updateRoi);
+
+    armourBlock = Rect2d(minBoundRect.x + armourBlock.x - armourBlock.height/4,
+                         minBoundRect.y + armourBlock.y - armourBlock.height/2,
+                         minBoundRect.width, minBoundRect.height);
+
+    correctBorders(armourBlock, srcImage);
+
     //画出追踪的区域
     rectangle(srcImage, armourBlock, Scalar(255, 0, 0), 2, 1);
 
@@ -111,10 +130,16 @@ Rect2d ArmourTracker::refineRect(Mat& updateRoi, Mat& srcImage)
     medianBlur(updateValue, updateValue, 3);
 
     //提取扩大范围跟踪区域V通道二值化图
-    adjustRoi = srcImage(Rect(armourBlock.x - armourBlock.height/4,
-                              armourBlock.y - armourBlock.height/2,
-                              armourBlock.width + armourBlock.height/2,
-                              9*armourBlock.height/5));
+
+    Rect2d amplifyRect = Rect2d(armourBlock.x - armourBlock.height/4,
+                                armourBlock.y - armourBlock.height/2,
+                                armourBlock.width + armourBlock.height/2,
+                                9*armourBlock.height/5);
+
+    correctBorders(amplifyRect, srcImage);
+
+    adjustRoi = srcImage(amplifyRect);
+
     Mat adjustHSV, hsvImage[3];
     cvtColor(adjustRoi, adjustHSV, CV_BGR2HSV);
     split(adjustHSV, hsvImage);
@@ -124,32 +149,42 @@ Rect2d ArmourTracker::refineRect(Mat& updateRoi, Mat& srcImage)
     //获取更新后矩形框内连通域轮廓
     vector<vector<Point> > contours;
     findContours(updateValue, contours, CV_RETR_EXTERNAL, CV_CHAIN_APPROX_NONE);
-    drawContours(updateRoi, contours, -1, Scalar(0,255,255), 2);
+    //drawContours(updateRoi, contours, -1, Scalar(0,255,255), 2);
 
     RotatedRect rotatedRect[contours.size()];
     RotatedRect minArmourRect;
+    Rect2d minBoundRect;
+    int boundNum = 1;
 
     //获取连通域最小外接矩形
     for(unsigned int a = 0; a < contours.size(); a++)
-         rotatedRect[a] = minAreaRect(contours[a]);
+         rotatedRect[a] = minAreaRect(contours[a]);    
 
     //根据更新后框内连通域数量进行不同的矫正
     if(contours.size() == 0)
-        return armourBlock;
+        minBoundRect = Rect(armourBlock.height/4, armourBlock.height/2,
+                            armourBlock.width, armourBlock.height);
+    if(contours.size() == 1)
+    {
+        searchmatchDomains(minArmourRect, rotatedRect, contours.size(), boundNum);
 
-//    if(contours.size() == 1)
-//    {
-//        if(abs(rotatedRect[0].angle) <= 4 ||abs(rotatedRect[0].angle >= 86))
-//            return armourBlock;
-//        else
+//        if(boundNum == 0)
 //        {
-//            if(armourBlock.x < 0 || armourBlock.x + armourBlock.width > srcImage.cols
-//                    ||armourBlock.y < 0 || armourBlock.y + armourBlock.height > srcImage.rows)
-//               refineOverBorder(minArmourRect, rotatedRect, contours.size());
+//            if(abs(rotatedRect[0].angle) <= 4 ||abs(rotatedRect[0].angle >= 86))
+//                minBoundRect = minArmourRect.boundingRect2f();
 //            else
-//               refineNonOverBorder(minArmourRect, rotatedRect, contours.size());
+//            {
+//                if(armourBlock.x < 0 || armourBlock.x + armourBlock.width > srcImage.cols
+//                        ||armourBlock.y < 0 || armourBlock.y + armourBlock.height > srcImage.rows)
+//                   refineOverBorder(minArmourRect, rotatedRect, contours.size());
+//                else
+//                   refineNonOverBorder(minArmourRect, rotatedRect, contours.size());
+//            }
 //        }
-//    }
+
+        if(3*minArmourRect.size.area() > roi.rows*roi.cols)
+            minBoundRect = minArmourRect.boundingRect2f();
+    }
 
     if(contours.size() == 2)
     {
@@ -157,27 +192,35 @@ Rect2d ArmourTracker::refineRect(Mat& updateRoi, Mat& srcImage)
            &&rotatedRect[1].size.area() <= 1.5*rotatedRect[0].size.area()
            &&(abs(rotatedRect[0].angle - rotatedRect[1].angle) < 9
            ||abs(abs(rotatedRect[0].angle - rotatedRect[1].angle) - 90) < 9))
-            return armourBlock;
+            minBoundRect =Rect(armourBlock.height/4, armourBlock.height/2,
+                               armourBlock.width, armourBlock.height);
         else
-            searchmatchDomains(minArmourRect, rotatedRect, contours.size());
+        {
+             searchmatchDomains(minArmourRect, rotatedRect, contours.size(), boundNum);
+             if(3*minArmourRect.size.area() > roi.rows*roi.cols)
+                 minBoundRect = minArmourRect.boundingRect2f();
+        }
     }
 
     if(contours.size() > 2)
     {
-        searchmatchDomains(minArmourRect, rotatedRect, contours.size());
-    }    
+        searchmatchDomains(minArmourRect, rotatedRect, contours.size(), boundNum);
+        if(3*minArmourRect.size.area() > roi.rows*roi.cols)
+            minBoundRect = minArmourRect.boundingRect2f();
+    }
 
-    rectangle(adjustRoi, minArmourRect.boundingRect2f(), Scalar(255,255,0));
+    //rectangle(adjustRoi, minBoundRect, Scalar(255,255,0));
 
     imshow("updateValue", updateValue);
     imshow("adjustValue", adjustValue);
     imshow("adjustRoi", adjustRoi);
 
-    return minArmourRect.boundingRect2f();
+    return minBoundRect;
 }
 
 void ArmourTracker::refineOverBorder(RotatedRect& minArmourRect,
-                                     RotatedRect* rotatedRect, int rotatedSize)
+                                     RotatedRect* rotatedRect,
+                                     int rotatedSize)
 {
     Point2f corners[4];
     vector<Point2f> topCorners;
@@ -195,7 +238,7 @@ void ArmourTracker::refineOverBorder(RotatedRect& minArmourRect,
     //根据旋转矩形的相对更新矩形的为止与上方两点的夹角分四类进行矫正
     if(2*rotatedRect[0].center.x < updateValue.cols)
     {
-        if((topCorners[0].y - topCorners[1].y)/(topCorners[0].x - topCorners[0].x) < 0)
+        if((topCorners[0].y - topCorners[1].y)/(topCorners[0].x - topCorners[1].x) < 0)
         {
             minArmourRect.center.x = rotatedRect[0].center.x +
                     (updateValue.cols - rotatedRect[0].center.x)*
@@ -224,7 +267,7 @@ void ArmourTracker::refineOverBorder(RotatedRect& minArmourRect,
     }
     else
     {
-        if((topCorners[0].y - topCorners[1].y)/(topCorners[0].x - topCorners[0].x) < 0)
+        if((topCorners[0].y - topCorners[1].y)/(topCorners[0].x - topCorners[1].x) < 0)
         {
             minArmourRect.center.x = rotatedRect[0].center.x -
                     rotatedRect[0].center.x*pow(cos(rotatedRect[0].angle), 2)/2;
@@ -248,7 +291,8 @@ void ArmourTracker::refineOverBorder(RotatedRect& minArmourRect,
 }
 
 void ArmourTracker::refineNonOverBorder(RotatedRect& minArmourRect,
-                                        RotatedRect* rotatedRect, int rotatedSize)
+                                        RotatedRect* rotatedRect,
+                                        int rotatedSize)
 {
     Point2f corners[4];
     vector<Point2f> topCorners;
@@ -266,7 +310,7 @@ void ArmourTracker::refineNonOverBorder(RotatedRect& minArmourRect,
     //根据旋转矩形的相对更新矩形的为止与上方两点的夹角分四类进行矫正
     if(2*rotatedRect[0].center.x < updateValue.cols)
     {
-        if((topCorners[0].y - topCorners[1].y)/(topCorners[0].x - topCorners[0].x) < 0)
+        if((topCorners[0].y - topCorners[1].y)/(topCorners[0].x - topCorners[1].x) < 0)
         {
             minArmourRect.center.x = rotatedRect[0].center.x +
                     initArmourLength*cos(rotatedRect[0].angle)/2;
@@ -289,7 +333,7 @@ void ArmourTracker::refineNonOverBorder(RotatedRect& minArmourRect,
     }
     else
     {
-        if((topCorners[0].y - topCorners[1].y)/(topCorners[0].x - topCorners[0].x) < 0)
+        if((topCorners[0].y - topCorners[1].y)/(topCorners[0].x - topCorners[1].x) < 0)
         {
             minArmourRect.center.x = rotatedRect[0].center.x -
                     initArmourLength*cos(rotatedRect[0].angle)/2;
@@ -313,7 +357,9 @@ void ArmourTracker::refineNonOverBorder(RotatedRect& minArmourRect,
 }
 
 void ArmourTracker::searchmatchDomains(RotatedRect& minArmourRect,
-                                      RotatedRect* rotatedRect, int rotatedSize)
+                                       RotatedRect* rotatedRect,
+                                       int rotatedSize,
+                                       int& boundNum)
 {
     //获取放大后矩形框内连通域数量
     Point2f rotatedCenter[rotatedSize];
@@ -321,17 +367,17 @@ void ArmourTracker::searchmatchDomains(RotatedRect& minArmourRect,
     findContours(adjustValue, contours, CV_RETR_EXTERNAL, CV_CHAIN_APPROX_NONE);
 
     RotatedRect updateBlocks[rotatedSize];
-    RotatedRect adjustBlocks[contours.size() - 2];
+    RotatedRect adjustBlocks[contours.size() - 1];
 
     //对矩形框进行计数
-    unsigned int updataBlockNum = 0;
+    unsigned int updateBlockNum = 0;
     unsigned int preNum = 0;
     unsigned int exceptNum = 0;
 
     //将放大后矩形框分更新后矩形与非更新后矩形两类
     for(unsigned int i = 0; i < contours.size(); i++)
     {
-        preNum = updataBlockNum;
+        preNum = updateBlockNum;
         for(unsigned int j = 0; j < rotatedSize; j++)
         {
             rotatedCenter[j].x = rotatedRect[j].center.x + armourBlock.height/4;
@@ -340,83 +386,103 @@ void ArmourTracker::searchmatchDomains(RotatedRect& minArmourRect,
             //判断点与矩形的关系进行分类
             if(pointPolygonTest(contours[i], rotatedCenter[j], false) >= 0)
             {
-                updateBlocks[updataBlockNum] = minAreaRect(contours[i]);
-                updataBlockNum++;
+                updateBlocks[updateBlockNum] = minAreaRect(contours[i]);
+                updateBlockNum++;
             }
         }
-        if(preNum == updataBlockNum)
+        if(preNum == updateBlockNum)
         {
             adjustBlocks[exceptNum] = minAreaRect(contours[i]);
             exceptNum++;
         }
     }
 
-    cout<<"updataBlockNum:"<<contours.size()<<"\t"<<rotatedSize<<"\t"
-       <<updataBlockNum<<"\t"<<exceptNum<<endl;
+//    cout<<"updateBlockNum:"<<contours.size()<<"\t"<<rotatedSize<<"\t"
+//       <<updateBlockNum<<"\t"<<exceptNum<<endl;
 
     vector<RotatedRect> armours;
-    RotatedRect updateClone[rotatedSize];
-    int number = 0;
+    RotatedRect updateClone[updateBlockNum];
+    RotatedRect adjustClone[exceptNum];
+    int updateNum;
+    int adjustNum;
+
+    updateNum = cloneScreen(updateBlocks, rotatedSize, updateClone, updateBlockNum);
+    adjustNum = cloneScreen(adjustBlocks, contours.size() - 1, adjustClone, exceptNum);
 
     //对更新后矩形框内连通域数量大于2的进行匹配，寻找最优匹配
-    if(updataBlockNum >= 2)
+    if(updateNum >= 2)
     {
-        armours = adjustScreen(updateClone, updateBlocks, rotatedSize, number);
+        armours = updateScreen(updateClone, updateNum, updateBlockNum);
 
         if(armours.size() == 0)
-            armours = updateScreen(updateClone, number, adjustBlocks, contours.size() - 2);
+            armours = adjustScreen(updateClone, updateBlockNum, updateNum,
+                                     adjustClone, exceptNum, adjustNum);
         if(armours.size() == 1)
             minArmourRect = armours[0];
-//        if(armours.size() > 1)
-//            minArmourRect = armourConfidence(armours);
+        if(armours.size() > 1)
+            minArmourRect = armourConfidence(armours);
     }
 
     //对改性后矩形框内连通域与放大后矩形框内非更新矩形框内连通域矩形匹配
-    if(updataBlockNum == 1)
+    if(updateNum == 1)
     {
-        armours = updateScreen(updateClone, number, adjustBlocks, contours.size() - 2);
+        armours = adjustScreen(updateClone, updateBlockNum, updateNum,
+                                 adjustClone, exceptNum, adjustNum);
 
+        if(armours.size() == 0)
+            boundNum--;
         if(armours.size() == 1)
             minArmourRect = armours[0];
-//        if(armours.size() > 1)
-//            minArmourRect = armourConfidence(armours);
+        if(armours.size() > 1)
+            minArmourRect = armourConfidence(armours);
     }
 }
 
-vector<RotatedRect> ArmourTracker::adjustScreen(RotatedRect* updateClone, RotatedRect* updateBlocks,
-                                                int rotatedSize, int number)
+int ArmourTracker::cloneScreen(RotatedRect* blocks,
+                               int blockSize,
+                               RotatedRect* clone,
+                               int cloneBlockNum)
+{
+    int num = 0;
+
+    //对单个矩形矩形筛选，初步选出优先矩
+    for(unsigned int i = 0; i < blockSize; i++)
+    {
+        if(blocks[i].angle > -20)
+        {
+            if(blocks[i].size.height > 0.8*blocks[i].size.width)
+            {
+                clone[num] = blocks[i];
+                num++;
+            }
+        }
+
+        if(blocks[i].angle < -70)
+        {
+            if(blocks[i].size.width > 0.8*blocks[i].size.height)
+            {
+                clone[num] = blocks[i];
+                num++;
+            }
+        }
+    }
+
+    return num;
+}
+
+vector<RotatedRect> ArmourTracker::updateScreen(RotatedRect* updateClone,
+                                                int updateNum,
+                                                int updateBlockNum)
 {
     vector<RotatedRect> armours;
     RotatedRect armourRotated;
 
-    //对单个矩形矩形筛选，初步选出优先矩
-    for(unsigned int i = 0; i < rotatedSize; i++)
-    {
-        if(updateBlocks[i].angle > -20)
-        {
-            if(updateBlocks[i].size.height/updateBlocks[i].size.width > 0.8)
-            {
-                updateClone[number] = updateBlocks[i];
-                number++;
-            }
-        }
-
-        if(updateBlocks[i].angle < -70)
-        {
-            if(updateBlocks[i].size.width/updateBlocks[i].size.height > 0.8)
-            {
-                updateClone[number] = updateBlocks[i];
-                number++;
-            }
-        }
-    }
-
     //对筛选后矩形进行匹配筛选
-    if(number >= 2)
+    if(updateNum >= 2)
     {
-        for(unsigned i = 0; i < number - 1; i++)
+        for(unsigned i = 0; i < updateNum - 1; i++)
         {
-            for(unsigned j = i + 1; j < number; j++)
+            for(unsigned j = i + 1; j < updateNum; j++)
             {
                 if(updateClone[i].size.area() > 0.15*updateClone[j].size.area()
                         && updateClone[j].size.area() > 0.15*updateClone[i].size.area())
@@ -446,40 +512,20 @@ vector<RotatedRect> ArmourTracker::adjustScreen(RotatedRect* updateClone, Rotate
     return armours;
 }
 
-vector<RotatedRect> ArmourTracker::updateScreen(RotatedRect* updateClone, int number,
-                                                RotatedRect* adjustBlocks, int saveRotatedSize)
+vector<RotatedRect> ArmourTracker::adjustScreen(RotatedRect* updateClone,
+                                                int updateBlockNum,
+                                                int updateNum,
+                                                RotatedRect* adjustClone,
+                                                int exceptNum,
+                                                int adjustNum)
 {
     vector<RotatedRect> armours;
-    RotatedRect armourRotated;
-    RotatedRect adjustClone[saveRotatedSize];
-    unsigned int adjustNum = 0;
-
-    //对非更新矩形框内连通域矩形进行筛选
-    for(unsigned int i = 0; i < saveRotatedSize; i++)
-    {
-        if(adjustBlocks[i].angle > -20)
-        {
-            if(adjustBlocks[i].size.height/adjustBlocks[i].size.width > 0.8)
-            {
-                adjustClone[adjustNum] = adjustBlocks[i];
-                adjustNum++;
-            }
-        }
-
-        if(adjustBlocks[i].angle < -70)
-        {
-            if(adjustBlocks[i].size.width/adjustBlocks[i].size.height > 0.8)
-            {
-                adjustClone[adjustNum] = adjustBlocks[i];
-                adjustNum++;
-            }
-        }
-    }
+    RotatedRect armourRotated;       
 
     //对筛选后矩形进行匹配筛选
     if(adjustNum > 1)
     {
-        for(unsigned int i = 0; i < number; i++)
+        for(unsigned int i = 0; i < updateNum; i++)
         {
             for(unsigned int j = 0; j < adjustNum; j++)
             {
@@ -513,9 +559,100 @@ vector<RotatedRect> ArmourTracker::updateScreen(RotatedRect* updateClone, int nu
 
 RotatedRect ArmourTracker::armourConfidence(vector<RotatedRect>& armours)
 {
+    RotatedRect appraiseArmour[armours.size()];
+    float appraiseGrade[armours.size()];
+    unsigned int num = 0;
+
     for(unsigned i = 0; i < armours.size(); i++)
     {
+        float grade = 0;
+        Point2f fpoints[4];
+        armours[i].points(fpoints);
 
+        //浮点数转换整数
+        Point points[4];
+        for(unsigned int i = 0; i < 4; i++)
+        {
+            points[i] = Point(static_cast<int>(fpoints[i].x), static_cast<int>(fpoints[i].y));
+        }
+
+        const Point* pts = points;
+        const int npts = 4;
+
+        //创建掩码区域为包含装甲板的旋转矩形
+        Mat mask(adjustValue.size(), CV_8UC1, Scalar(0));
+        //多边形填充
+        fillConvexPoly(mask, pts, npts, Scalar(255));
+
+        //使用位“与”运算获取旋转矩形内连通域
+        bitwise_and(mask, adjustValue, mask);
+
+        //获取旋转矩形内连通域数量
+        vector<vector<Point> >contours;
+        findContours(mask, contours, CV_RETR_EXTERNAL, CV_CHAIN_APPROX_NONE);
+
+        //对连通域数量为2的旋转矩形进行评分
+        if(contours.size() == 2)
+        {
+            RotatedRect light[2];
+            light[0] = minAreaRect(contours[0]);
+            light[1] = minAreaRect(contours[1]);
+
+            float angle_0 = min(abs(light[0].angle), 90 - abs(light[0].angle));
+            float angle_1 = min(abs(light[1].angle), 90 - abs(light[1].angle));
+
+            float slantAngle = min(abs(armours[i].angle), 90 - abs(armours[i].angle));
+
+            //计算两轮廓的分数，由旋转矩形倾斜角，两连通域旋转角差组成
+
+            float largeArea = max(contourArea(contours[0]), contourArea(contours[1]));
+            float smallArea = min(contourArea(contours[0]), contourArea(contours[1]));
+
+            //评分由旋转矩形倾斜角
+            grade = (slantAngle*CV_PI/180 + 0.01)/5 * (abs(angle_0 - angle_1) + 1);
+
+            appraiseArmour[num] = armours[i];
+            appraiseGrade[num] = grade;
+            num++;
+        }
+    }
+
+    RotatedRect optimalArmour = sortArmour(appraiseArmour, appraiseGrade, armours.size(), num);
+    return optimalArmour;
+}
+
+RotatedRect ArmourTracker::sortArmour(RotatedRect* appraiseArmour,
+                                      float* appraiseGrade,
+                                      int arrayNum,
+                                      unsigned int num)
+{
+    RotatedRect optimalArmour = appraiseArmour[0];
+    float lowestGrade = appraiseGrade[0];
+
+    //选出分数最低的旋转矩形为最优矩
+    for(unsigned i = 1; i < num; i++)
+    {
+        if(appraiseGrade[i] < lowestGrade)
+            optimalArmour = appraiseArmour[i];
+    }
+
+    return optimalArmour;
+}
+
+void ArmourTracker::correctBorders(Rect2d& initRect, Mat& srcImage)
+{
+    Rect2d region = initRect;
+
+    //对越界矩形边界进行纠正
+    if (initRect.x < 0){initRect.x = 0;initRect.width += region.x;}
+    if (initRect.x + initRect.width > srcImage.cols)
+    {
+        initRect.width = srcImage.cols - region.x;
+    }
+    if (initRect.y < 0){initRect.y = 0;initRect.height += region.y;};
+    if ( initRect.y + initRect.height > srcImage.rows)
+    {
+        initRect.height = srcImage.rows - region.y;
     }
 }
 
@@ -523,6 +660,7 @@ RotatedRect ArmourTracker::getArmourRotated(RotatedRect* matchDomains, int match
 {
     RotatedRect armourRotated;
     vector<Point> armourPoints;
+  
     for(unsigned int i = 0; i < matchSize; i++)
     {
         Point2f lightPoints[4];
@@ -569,8 +707,7 @@ void ArmourTracker::fourierTransform(Mat& src)
     //而低值为黑点，高低值的变化无法有效分辨。为了在屏幕上凸显出高低变化的连续性，我们可以用对数尺度来替换线性尺度:
     magI+= 1;
     log(magI,magI);//取对数
-    magI= magI(Rect(0,0,src_gray.cols,src_gray.rows));//前边对原始图像进行了扩展，这里把对原始图像傅里叶变换取出，剔除扩展部分。
-
+    magI= magI(Rect(0,0,src_gray.cols,src_gray.rows));//前边对原始图像进行了扩展，                                                      //这里把对原始图像傅里叶变换取出，剔除扩展部分。
 
     //这一步的目的仍然是为了显示。 现在我们有了重分布后的幅度图，
     //但是幅度值仍然超过可显示范围[0,1] 。我们使用 normalize() 函数将幅度归一化到可显示范围。
