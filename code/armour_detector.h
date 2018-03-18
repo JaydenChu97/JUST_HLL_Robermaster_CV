@@ -231,19 +231,19 @@ private:
     * @param[in] srcImage 待检测原图像
     * @param[in] dstImage 对原图像进行图像预处理后的图像
     * @param[in] armourBlocks 包围装甲板区域的最小旋转矩形数组
-    * @param[in] lampsNum 初步检测最小外接矩形的实际数量,armourBlocks数组的数量
-    * @param[in] armoursNum 装甲板检测后获得的装甲板数量
     * @param[in] average 最终检测出的装甲板的平均值
     * @param[in] standard 最终检测出的装甲板的标准差
+    * @param[in] lampsNum 初步检测最小外接矩形的实际数量,armourBlocks数组的数量
+    * @param[in] armoursNum 装甲板检测后获得的装甲板数量
     * @return null
     */
     void markArmourBlocks(const Mat& srcImage,
                           const Mat& dstImage,
                           const RotatedRect* armourBlocks,
-                          int lampsNum,
-                          int armoursNum,
                           double* average,
-                          double* standard);
+                          double* standard,
+                          int lampsNum,
+                          int armoursNum);
 
     /**
      * @brief 对边界进行矫正
