@@ -122,7 +122,7 @@ void MainControl::run(const string& path)
         {
             armourBlock = armourDetector.getBestArmourBlock();
             armourTracker.init(resizeFrame, armourBlock);
-            //status = TRACKING;
+            status = TRACKING;
             findArmourBlock = true;
         }
 

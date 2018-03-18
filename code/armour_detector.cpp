@@ -344,7 +344,7 @@ void ArmourDetector::extracArmourBlocks(RotatedRect* armourBlocks,
         }
     }
 }
-
+  
 void ArmourDetector::domainCountDetect(const RotatedRect* initLightBlocks,
                                        const Mat& dstImage,
                                        int& labelValue,
@@ -626,9 +626,16 @@ void ArmourDetector::markArmourBlocks(const Mat& srcImage,
     {
         optimalArmourBlocks.push_back(OptimalArmourBlock(armourBlocks[0], abs(average[0])));
     }
+}
 
-    //将装甲板区域按分从小到大排序，找出最佳区域
-    sort(optimalArmourBlocks.begin(), optimalArmourBlocks.end());
+void ArmourDetector::correctBorder(int& left, int& top, int& width, int& height, Mat image)
+{
+    int leftClone = left, topClone = top;
+
+    if(left < 0){left = 0; width += leftClone;}
+    if(left + width > image.cols){width = image.cols - leftClone;}
+    if(top < 0){top = 0; height += topClone;}
+    if(top + height > image.rows){height = image.rows - topClone;}
 }
 
 void ArmourDetector::correctBorder(int& left, int& top, int& width, int& height, Mat image)
