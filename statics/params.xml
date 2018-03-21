@@ -31,4 +31,8 @@
     <red_image_preprocessor_threshod>
         160 180 190 255 215 255
     </red_image_preprocessor_threshod>
+
+    <blue_image_preprocessor_threshod>
+        100 120 190 255 215 255
+    </blue_image_preprocessor_threshod>
 </opencv_storage>

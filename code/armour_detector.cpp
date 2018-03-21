@@ -61,6 +61,8 @@ bool ArmourDetector::detect(const Mat& srcImage)
                        lampsNum, armoursNum, average, standard);
     C = clock();
 
+    cout<<"armourNum:"<<armoursNum<<endl;
+
     //查看搜索出的每一个独立的团块
     drawArrayBlocks(drawImage, armourBlocks, lampsNum, armoursNum, Scalar(100, 150, 200));
 
@@ -72,7 +74,7 @@ bool ArmourDetector::detect(const Mat& srcImage)
     //对每个装甲板区域评分
 
     d = clock();
-    markArmourBlocks(srcImage, dstImage, armourBlocks, lampsNum, armoursNum, average, standard);
+    markArmourBlocks(srcImage, dstImage, armourBlocks, average, standard, lampsNum, armoursNum);
     D = clock();
 
     drawVectorBlocks(drawImage,
@@ -323,18 +325,26 @@ void ArmourDetector::extracArmourBlocks(RotatedRect* armourBlocks,
             //根据像素的离散程度再次筛选甲板
             if(abs(armourPixelAvg) < params.armourPixelAvg)
             {
-                armourBlocks[armoursNum] = armourReserve[i];
-                average[armoursNum] = abs(armourPixelAvg);
-                standard[armoursNum] = armourStandard;
-                armoursNum++;
-                cout<<"outRangePercent:"<<outRangePercent<<"\t"
-                 <<"armourPixelAvg:"<<armourPixelAvg<<"\t"
-                <<"armourStandard:"<<armourStandard<<endl;
+                int left = armourReserve[i].boundingRect().x,
+                    top = armourReserve[i].boundingRect().y,
+                    width = armourReserve[i].boundingRect().width,
+                    height = armourReserve[i].boundingRect().height;
+                if(left > 0 && left + width < dstImage.cols &&
+                        top > 0 && top + height < dstImage.rows)
+                {
+                    armourBlocks[armoursNum] = armourReserve[i];
+                    average[armoursNum] = abs(armourPixelAvg);
+                    standard[armoursNum] = armourStandard;
+                    armoursNum++;
+                    cout<<"outRangePercent:"<<outRangePercent<<"\t"
+                     <<"armourPixelAvg:"<<armourPixelAvg<<"\t"
+                    <<"armourStandard:"<<armourStandard<<endl;
+                }
             }
         }
     }
 }
-
+  
 void ArmourDetector::domainCountDetect(const RotatedRect* initLightBlocks,
                                        const Mat& dstImage,
                                        int& labelValue,
@@ -546,16 +556,16 @@ void ArmourDetector::calcDeviation(const RotatedRect armourReserve,
 void ArmourDetector::markArmourBlocks(const Mat& srcImage,
                                       const Mat& dstImage,
                                       const RotatedRect* armourBlocks,
-                                      int lampsNum,
-                                      int armoursNum,
                                       double* average,
-                                      double* standard)
+                                      double* standard,
+                                      int lampsNum,
+                                      int armoursNum)
 {
     //清除之前运算的结果
     optimalArmourBlocks.clear();
 
     //通过评分选出最优装甲板
-    if(armoursNum > 1)
+    if(armoursNum >= 2)
     {
         //根据方差找到最近的两个装甲板区域
         RotatedRect nearRotated[2];
@@ -608,20 +618,24 @@ void ArmourDetector::markArmourBlocks(const Mat& srcImage,
             //长宽比与离散系数乘积去除错误错误匹配并判别多辆车远近
             double grade = (sin(angle) + 1)*frontAvg[id]*standard[id];
 
-            //imshow("mask", mask);
-
             optimalArmourBlocks.push_back(OptimalArmourBlock(nearRotated[id], grade));
         }
-
-        //将装甲板区域按分从小到大排序，找出最佳区域
-        sort(optimalArmourBlocks.begin(), optimalArmourBlocks.end());
     }
 
-    else if(armoursNum == 1)
+    if(armoursNum == 1)
     {
         optimalArmourBlocks.push_back(OptimalArmourBlock(armourBlocks[0], abs(average[0])));
-        sort(optimalArmourBlocks.begin(), optimalArmourBlocks.end());
     }
+}
+
+void ArmourDetector::correctBorder(int& left, int& top, int& width, int& height, Mat image)
+{
+    int leftClone = left, topClone = top;
+
+    if(left < 0){left = 0; width += leftClone;}
+    if(left + width > image.cols){width = image.cols - leftClone;}
+    if(top < 0){top = 0; height += topClone;}
+    if(top + height > image.rows){height = image.rows - topClone;}
 }
 
 void ArmourDetector::correctBorder(int& left, int& top, int& width, int& height, Mat image)

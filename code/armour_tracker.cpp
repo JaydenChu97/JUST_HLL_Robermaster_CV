@@ -86,25 +86,6 @@ bool ArmourTracker::track(Mat srcImage)
 
     correctBorders(armourBlock, srcImage);
 
-    correctBorders(armourBlock, srcImage);
-
-    //获取个性后矩形框的Mat形式，方便之后处理
-    updateRoi = srcImage(Rect2d(armourBlock.x, armourBlock.y, armourBlock.width, armourBlock.height));
-
-    Rect2d minBoundRect;
-
-    if(3*armourBlock.area() > roi.cols*roi.rows)
-    //对矩形框进行矫正，获取其最小外接矩形
-        minBoundRect = refineRect(updateRoi, srcImage);
-
-    imshow("updateRoi", updateRoi);
-
-    armourBlock = Rect2d(minBoundRect.x + armourBlock.x - armourBlock.height/4,
-                         minBoundRect.y + armourBlock.y - armourBlock.height/2,
-                         minBoundRect.width, minBoundRect.height);
-
-    correctBorders(armourBlock, srcImage);
-
     //画出追踪的区域
     rectangle(srcImage, armourBlock, Scalar(255, 0, 0), 2, 1);
 
@@ -654,6 +635,7 @@ RotatedRect ArmourTracker::getArmourRotated(RotatedRect* matchDomains, int match
 {
     RotatedRect armourRotated;
     vector<Point> armourPoints;
+
     for(unsigned int i = 0; i < matchSize; i++)
     {
         Point2f lightPoints[4];
@@ -702,7 +684,6 @@ void ArmourTracker::fourierTransform(Mat& src)
     log(magI,magI);//取对数
     magI= magI(Rect(0,0,src_gray.cols,src_gray.rows));//前边对原始图像进行了扩展，
                                                       //这里把对原始图像傅里叶变换取出，剔除扩展部分。
-
     //这一步的目的仍然是为了显示。 现在我们有了重分布后的幅度图，
     //但是幅度值仍然超过可显示范围[0,1] 。我们使用 normalize() 函数将幅度归一化到可显示范围。
     normalize(magI,magI,0,1,CV_MINMAX);//傅里叶图像进行归一化。
