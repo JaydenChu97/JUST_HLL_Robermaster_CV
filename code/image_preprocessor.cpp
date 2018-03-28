@@ -12,6 +12,8 @@ ImagePreprocessor::ImagePreprocessor()
     FileNode red_node = fs["red_image_preprocessor_threshod"];
     FileNode blue_node = fs["blue_image_preprocessor_threshod"];
 
+    color = 0;
+
     if(color == 0)
     {
         for(unsigned int i = 0; i < 3; i++)
@@ -60,28 +62,26 @@ Mat ImagePreprocessor::preprocess(const Mat& srcImage)
     Mat kernel_2 = getStructuringElement(MORPH_RECT, Size(5,2));
     erode(hue, hue, kernel_1);
     dilate(hue, hue, kernel_2);
-    dilate(saturation, saturation, kernel_2);
+    dilate(saturation, saturation, kernel_1);
 
     //初始化二值化图
     Mat framethreshold = Mat(value.size(), CV_8UC1,Scalar(0));
-    end = clock();
-    cout<<"blurTime:"<<double(end - begin)/CLOCKS_PER_SEC<<"s"<<endl;
 
-    begin = clock();
     //根据三个通道绘制二值化图
     if(color == 0)
         redThreshProcess(srcImage, framethreshold, hue, saturation, value);
     else
         blueThreshProcess(srcImage, framethreshold, hue, saturation, value);
-    end = clock();
-    cout<<"preprecessorTime:"<<double(end - begin)/CLOCKS_PER_SEC<<"s"<<endl;
 
     //中值滤波去除噪声点，同时使灯柱边缘润滑
     medianBlur(framethreshold, framethreshold, 3);
 
     //水平,竖直方向连接一些连接的团块，防止运动模糊产生重影
-    Mat kernel_3 = getStructuringElement(MORPH_RECT, Size(4,4));
+    Mat kernel_3 = getStructuringElement(MORPH_RECT, Size(4,1));
     morphologyEx(framethreshold, framethreshold, MORPH_CLOSE, kernel_3);
+
+    end = clock();
+    //cout<<"imageProcessTime:"<<double(end - begin)/CLOCKS_PER_SEC<<"s"<<"\t"<<endl;
 
     //显示单通道处理后图像
     imshow("hImage", hue);
@@ -120,57 +120,79 @@ void ImagePreprocessor::redThreshProcess(const Mat& srcImage,
             {
                 if(abs(rotatedRect[a].angle) < 30 || abs(rotatedRect[a].angle) > 60)
                 {                    
-
                     //计算团块周边红绿特征
                     float hueContourPixels = 0;
                     unsigned int contoursRedSum = 0;
                     unsigned int contoursBlueSum = 0;
                     unsigned int contoursArea = contourArea(contours[a], false);
 
-                    for(double b = 0; b < contours[a].size(); b++)
+                    if(1.4*contoursArea > rotatedRect[a].size.area())
                     {
-                        contoursRedSum += srcImage.at<Vec3b>(contours[a][b])[2];
-                        contoursBlueSum += srcImage.at<Vec3b>(contours[a][b])[0];
-                        if(hue.at<uchar>(contours[a][b]) == 255)
-                           hueContourPixels++;
-                    }
-                    unsigned int redAvg = contoursRedSum/contours[a].size();
-                    unsigned int blueAvg = contoursBlueSum/contours[a].size();
-                    //cout<<"redAvg:"<<redAvg<<"\t"<<"blueAvg:"<<blueAvg<<endl;
-                    //cout<<"hueContourPixels:"<<hueContourPixels/contours[a].size()<<endl;
-
-                    if(redAvg > blueAvg)
-                    {
-                        unsigned int huePixel = 0;
-                        unsigned int saturationPixel = 0;
-                        float left = boundRect[a].x - 6,
-                              right = boundRect[a].x + boundRect[a].width + 6,
-                              top = boundRect[a].y,
-                              bottom = boundRect[a].y + boundRect[a].height;
-
-                        //检测亮度通道团块在H与S通道周围像素情况，存在所设定阈值像素则判定为灯柱
-                        if(left > 0 && right < framethreshold.cols
-                                && top > 0 && bottom < framethreshold.rows)
+                        for(double b = 0; b < contours[a].size(); b++)
                         {
-                            for(int i = top; i < bottom; i++)
+                            contoursRedSum += srcImage.at<Vec3b>(contours[a][b])[2];
+                            contoursBlueSum += srcImage.at<Vec3b>(contours[a][b])[0];
+                            if(hue.at<uchar>(contours[a][b]) == 255)
+                               hueContourPixels++;
+                        }
+                        unsigned int redAvg = contoursRedSum/contours[a].size();
+                        unsigned int blueAvg = contoursBlueSum/contours[a].size();
+                        //cout<<"redAvg:"<<redAvg<<"\t"<<"blueAvg:"<<blueAvg<<endl;
+                        //cout<<"hueContourPixels:"<<hueContourPixels/contours[a].size()<<endl;
+
+                        if(redAvg > blueAvg)
+                        {
+                            unsigned int huePixel = 0;
+                            unsigned int saturationPixel = 0;
+                            float left = boundRect[a].x - 6,
+                                  right = boundRect[a].x + boundRect[a].width + 6,
+                                  top = boundRect[a].y,
+                                  bottom = boundRect[a].y + boundRect[a].height;
+
+                            //检测亮度通道团块在H与S通道周围像素情况，存在所设定阈值像素则判定为灯柱
+                            if(left > 0 && right < framethreshold.cols
+                                    && top > 0 && bottom < framethreshold.rows)
                             {
-                                uchar* hueData = hue.ptr<uchar>(i);
-                                uchar* saturationData = saturation.ptr<uchar>(i);
-                                for(int j = left; j < right; j++)
+                                for(int i = top; i < bottom; i++)
                                 {
-                                    if(hueData[j] == 255)
-                                        huePixel++;
-                                    if(saturationData[j] == 255)
-                                        saturationPixel++;
+                                    uchar* hueData = hue.ptr<uchar>(i);
+                                    uchar* saturationData = saturation.ptr<uchar>(i);
+                                    for(int j = left; j < right; j++)
+                                    {
+                                        if(hueData[j] == 255)
+                                            huePixel++;
+                                        if(saturationData[j] == 255)
+                                            saturationPixel++;
+                                    }
                                 }
                             }
-                        }
 
-                        //根据亮度图团块进行二值图的绘制
-                        if(saturationPixel > 0)
-                        {
-                            if(huePixel > 0
-                               && contoursArea > 15)
+                            //根据亮度图团块进行二值图的绘制
+                            if(saturationPixel > 0)
+                            {
+                                if(huePixel > 0
+                                   && contoursArea > 15)
+                                {
+                                    for (int i = boundRect[a].y;
+                                         i < boundRect[a].y + boundRect[a].height;
+                                         i++)
+                                    {
+                                        uchar* valueData = value.ptr<uchar>(i);
+                                        uchar* framethresholdData = framethreshold.ptr<uchar>(i);
+                                        for (int j = boundRect[a].x;
+                                             j < boundRect[a].x + boundRect[a].width;
+                                             j++)
+                                        {
+                                                if (valueData[j] == 255)
+                                                    framethresholdData[j] = 255;
+                                        }
+                                    }
+                                }
+                            }
+                            else if(huePixel > 0
+                                    && hueContourPixels/contours[a].size()>0.03
+                                    && contoursArea > 20
+                                    && boundRect[a].height > 1.5*boundRect[a].width)
                             {
                                 for (int i = boundRect[a].y;
                                      i < boundRect[a].y + boundRect[a].height;
@@ -185,26 +207,6 @@ void ImagePreprocessor::redThreshProcess(const Mat& srcImage,
                                             if (valueData[j] == 255)
                                                 framethresholdData[j] = 255;
                                     }
-                                }
-                            }
-                        }
-                        else if(huePixel > 0
-                                && hueContourPixels/contours[a].size()>0.03
-                                && contoursArea > 20
-                                && boundRect[a].height > 1.5*boundRect[a].width)
-                        {
-                            for (int i = boundRect[a].y;
-                                 i < boundRect[a].y + boundRect[a].height;
-                                 i++)
-                            {
-                                uchar* valueData = value.ptr<uchar>(i);
-                                uchar* framethresholdData = framethreshold.ptr<uchar>(i);
-                                for (int j = boundRect[a].x;
-                                     j < boundRect[a].x + boundRect[a].width;
-                                     j++)
-                                {
-                                        if (valueData[j] == 255)
-                                            framethresholdData[j] = 255;
                                 }
                             }
                         }
@@ -248,50 +250,73 @@ void ImagePreprocessor::blueThreshProcess(const Mat& srcImage,
                     unsigned int contoursBlueSum = 0;
                     unsigned int contoursArea = contourArea(contours[a], false);
 
-                    for(double b = 0; b < contours[a].size(); b++)
+                    if(1.4*contoursArea > rotatedRect[a].size.area())
                     {
-                        contoursRedSum += srcImage.at<Vec3b>(contours[a][b])[2];
-                        contoursBlueSum += srcImage.at<Vec3b>(contours[a][b])[0];
-                        if(hue.at<uchar>(contours[a][b]) == 255)
-                           hueContourPixels++;
-                    }
-                    unsigned int redAvg = contoursRedSum/contours[a].size();
-                    unsigned int blueAvg = contoursBlueSum/contours[a].size();
-                    //cout<<"redAvg:"<<redAvg<<"\t"<<"blueAvg:"<<blueAvg<<endl;
-                    //cout<<"hueContourPixels:"<<hueContourPixels/contours[a].size()<<endl;
-
-                    if(redAvg < blueAvg)
-                    {
-                        unsigned int huePixel = 0;
-                        unsigned int saturationPixel = 0;
-                        float left = boundRect[a].x - 6,
-                              right = boundRect[a].x + boundRect[a].width + 6,
-                              top = boundRect[a].y,
-                              bottom = boundRect[a].y + boundRect[a].height;
-
-                        //检测亮度通道团块在H与S通道周围像素情况，存在所设定阈值像素则判定为灯柱
-                        if(left > 0 && right < framethreshold.cols
-                                && top > 0 && bottom < framethreshold.rows)
+                        for(double b = 0; b < contours[a].size(); b++)
                         {
-                            for(int i = top; i < bottom; i++)
+                            contoursRedSum += srcImage.at<Vec3b>(contours[a][b])[2];
+                            contoursBlueSum += srcImage.at<Vec3b>(contours[a][b])[0];
+                            if(hue.at<uchar>(contours[a][b]) == 255)
+                               hueContourPixels++;
+                        }
+                        unsigned int redAvg = contoursRedSum/contours[a].size();
+                        unsigned int blueAvg = contoursBlueSum/contours[a].size();
+                        //cout<<"redAvg:"<<redAvg<<"\t"<<"blueAvg:"<<blueAvg<<endl;
+                        //cout<<"hueContourPixels:"<<hueContourPixels/contours[a].size()<<endl;
+
+                        if(redAvg < blueAvg)
+                        {
+                            unsigned int huePixel = 0;
+                            unsigned int saturationPixel = 0;
+                            float left = boundRect[a].x - 6,
+                                  right = boundRect[a].x + boundRect[a].width + 6,
+                                  top = boundRect[a].y,
+                                  bottom = boundRect[a].y + boundRect[a].height;
+
+                            //检测亮度通道团块在H与S通道周围像素情况，存在所设定阈值像素则判定为灯柱
+                            if(left > 0 && right < framethreshold.cols
+                                    && top > 0 && bottom < framethreshold.rows)
                             {
-                                uchar* hueData = hue.ptr<uchar>(i);
-                                uchar* saturationData = saturation.ptr<uchar>(i);
-                                for(int j = left; j < right; j++)
+                                for(int i = top; i < bottom; i++)
                                 {
-                                    if(hueData[j] == 255)
-                                        huePixel++;
-                                    if(saturationData[j] == 255)
-                                        saturationPixel++;
+                                    uchar* hueData = hue.ptr<uchar>(i);
+                                    uchar* saturationData = saturation.ptr<uchar>(i);
+                                    for(int j = left; j < right; j++)
+                                    {
+                                        if(hueData[j] == 255)
+                                            huePixel++;
+                                        if(saturationData[j] == 255)
+                                            saturationPixel++;
+                                    }
                                 }
                             }
-                        }
 
-                        //根据亮度图团块进行二值图的绘制
-                        if(saturationPixel > 0)
-                        {
-                            if(huePixel > 0
-                               && contoursArea > 15)
+                            //根据亮度图团块进行二值图的绘制
+                            if(saturationPixel > 0)
+                            {
+                                if(huePixel > 0
+                                   && contoursArea > 15)
+                                {
+                                    for (int i = boundRect[a].y;
+                                         i < boundRect[a].y + boundRect[a].height;
+                                         i++)
+                                    {
+                                        uchar* valueData = value.ptr<uchar>(i);
+                                        uchar* framethresholdData = framethreshold.ptr<uchar>(i);
+                                        for (int j = boundRect[a].x;
+                                             j < boundRect[a].x + boundRect[a].width;
+                                             j++)
+                                        {
+                                                if (valueData[j] == 255)
+                                                    framethresholdData[j] = 255;
+                                        }
+                                    }
+                                }
+                            }
+                            else if(huePixel > 0
+                                    && hueContourPixels/contours[a].size()>0.03
+                                    && contoursArea > 20
+                                    && boundRect[a].height > 1.5*boundRect[a].width)
                             {
                                 for (int i = boundRect[a].y;
                                      i < boundRect[a].y + boundRect[a].height;
@@ -306,26 +331,6 @@ void ImagePreprocessor::blueThreshProcess(const Mat& srcImage,
                                             if (valueData[j] == 255)
                                                 framethresholdData[j] = 255;
                                     }
-                                }
-                            }
-                        }
-                        else if(huePixel > 0
-                                && hueContourPixels/contours[a].size()>0.03
-                                && contoursArea > 20
-                                && boundRect[a].height > 1.5*boundRect[a].width)
-                        {
-                            for (int i = boundRect[a].y;
-                                 i < boundRect[a].y + boundRect[a].height;
-                                 i++)
-                            {
-                                uchar* valueData = value.ptr<uchar>(i);
-                                uchar* framethresholdData = framethreshold.ptr<uchar>(i);
-                                for (int j = boundRect[a].x;
-                                     j < boundRect[a].x + boundRect[a].width;
-                                     j++)
-                                {
-                                        if (valueData[j] == 255)
-                                            framethresholdData[j] = 255;
                                 }
                             }
                         }

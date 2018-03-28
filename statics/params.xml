@@ -4,7 +4,7 @@
 <opencv_storage>
     <!--灯柱筛选条件-->
     <armour_detector>
-        <angleRange> 20 </angleRange>
+        <angleRange> 30 </angleRange>
         <minArea> 15 </minArea>
         <maxHeightWidthRat> 9 </maxHeightWidthRat>
         <minHeightWidthRat> 0.8 </minHeightWidthRat>

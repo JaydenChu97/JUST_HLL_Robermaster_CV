@@ -91,16 +91,25 @@ void MainControl::run(const string& path)
     int currentFrame = 0;
     while(true)
     {
+        clock_t begin, finish;
+        begin = clock();
         //添加运行时间统计
         Tool::getTimeCount(0);
         //添加滑动控制条跟随视频进度功能(这个功能极其耗时间，最好不要使用)
         //Tool::setTrackBarFollow(srcFilePath, srcFile);
         //添加键盘控制
         Tool::addKeyboardControl(srcFile);
+        finish = clock();
 
+        cout<<"toolTime:"<<(double)(finish - begin)/CLOCKS_PER_SEC<<"s"<<"\t"<<endl;
+
+        begin = clock();
         //读取一帧图像
         srcFile >> frame;
         currentFrame++;
+        finish = clock();
+
+        cout<<"readImgTime:"<<(double)(finish - begin)/CLOCKS_PER_SEC<<"s"<<"\t"<<endl;
 
         //视频播放完毕跳出程序
         if(frame.empty())
@@ -117,14 +126,17 @@ void MainControl::run(const string& path)
         Rect2d armourBlock;
         bool findArmourBlock = false;
 
+        begin = clock();
         //检测图片中的灯柱位置
         if(status == DETECTING && armourDetector.detect(resizeFrame))
         {
             armourBlock = armourDetector.getBestArmourBlock();
             armourTracker.init(resizeFrame, armourBlock);
-            //status = TRACKING;
+            status = TRACKING;
             findArmourBlock = true;
         }
+        finish = clock();
+        cout<<"detectTime:"<<(double)(finish - begin)/CLOCKS_PER_SEC<<"s"<<"\t"<<endl;
 
         // 追踪装甲板区域
         if(status == TRACKING)

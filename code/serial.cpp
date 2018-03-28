@@ -69,7 +69,6 @@ void Serial::writeBytes(const cv::Rect2d& armourBlock, const cv::Mat& resizeFram
     buffer.append(reinterpret_cast<char*>(&xDiff), 2);
     buffer.append(reinterpret_cast<char*>(&yDiff), 2);
 
-
     //显示被写入的数据
     for(int i = 0; i < buffer.size(); i++)
     {
