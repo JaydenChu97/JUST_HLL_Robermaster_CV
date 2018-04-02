@@ -28,6 +28,7 @@ ImagePreprocessor::ImagePreprocessor()
         for(unsigned int i = 0; i < 3; i++)
         {
             //cout << int(red_node[2*i]) << endl;
+
             thresholds[i].push_back(int(blue_node[2*i]));
             thresholds[i].push_back(int(blue_node[2*i+1]));
         }
@@ -67,6 +68,7 @@ Mat ImagePreprocessor::preprocess(const Mat& srcImage)
     //初始化二值化图
     Mat  framethreshold = Mat(value.size(), CV_8UC1,Scalar(0));
 
+    begin = clock();
     //根据三个通道绘制二值化图
     if(color == 0)
         redThreshProcess(srcImage, framethreshold, hue, saturation, value);

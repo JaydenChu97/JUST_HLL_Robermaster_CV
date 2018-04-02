@@ -139,6 +139,7 @@ private:
     Mat rangeThreshold(const Mat& srcImage, const int& channel);
 
     bool color; //颜色，0表示红色，1表示蓝色
+
 };
 //! @}
 }
