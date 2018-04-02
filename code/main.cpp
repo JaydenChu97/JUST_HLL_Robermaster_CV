@@ -21,7 +21,7 @@ int main(int argc, char *argv[])
     try
     {
         //F:\\视觉素材\\视觉素材\\炮台素材红车旋转-ev-0.MOV
-        instance.run("F:\\视觉素材\\视觉素材\\炮台素材红车旋转-ev-0.MOV");
+        instance.run("camera");
     }
     catch(const string& hint)
     {

@@ -381,7 +381,7 @@ void ArmourDetector::domainCountDetect(const RotatedRect* initLightBlocks,
     //矫正边界
     correctBorder(left, top, width, height, dstImage);
 
-    int trebleHeight = 3*height;
+    int trebleHeight = 2*height;
     if(top + trebleHeight >= dstImage.rows){trebleHeight = dstImage.rows - top;}
     /*
     for (unsigned int i = top; i < rows; i++)
@@ -442,7 +442,13 @@ void ArmourDetector::domainCountDetect(const RotatedRect* initLightBlocks,
     vector<vector<Point> > contours;
     Mat roi = dstImage(Rect(left, top, width, trebleHeight));
     findContours(roi, contours, CV_RETR_EXTERNAL, CV_CHAIN_APPROX_NONE);
-    labelValue = contours.size();
+    for(unsigned int i = 0; i < contours.size(); i++)
+    {
+        float contourAreas = contourArea(contours[i]);
+        if(contourAreas > 0.6*initLightBlocks[0].size.area()
+                && contourAreas < 1.4*initLightBlocks[0].size.area())
+            labelValue = contours.size();
+    }
 }
 
 RotatedRect ArmourDetector::getArmourRotated(RotatedRect* initLightBlocks, int lightsNum)

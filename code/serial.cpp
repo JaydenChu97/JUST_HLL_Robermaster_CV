@@ -9,9 +9,8 @@ Serial::Serial()
 void Serial::convertCoord(const cv::Rect2d& armourBlock,const cv::Mat& resizeFrame,
                           short& xDiff, short& yDiff)
 {
-
-    xDiff = static_cast<short>(armourBlock.x+armourBlock.width/2-resizeFrame.cols/2);
-    yDiff = static_cast<short>(resizeFrame.rows/2-(armourBlock.y+armourBlock.height/2));
+    xDiff = static_cast<short>(armourBlock.x + armourBlock.width/2 - resizeFrame.cols/2);
+    yDiff = static_cast<short>(resizeFrame.rows/2 - (armourBlock.y + armourBlock.height/2));
 }
 
 bool Serial::init(QString portName)
@@ -29,13 +28,13 @@ bool Serial::init(QString portName)
 
     //输出所用串口的相关信息
     qDebug() << serialPortInfo.portName() << endl
-             << serialPortInfo.description() << endl
-             << serialPortInfo.serialNumber() << endl;
+             << serialPortInfo.description() << endl;
+             //<< serialPortInfo.serialNumber() << endl;
 
     if(open(QIODevice::ReadWrite))
     {
         qDebug() << "open(QIODevice::ReadWrite)";
-        setBaudRate(QSerialPort::Baud115200);
+        setBaudRate(QSerialPort::Baud38400);
         setParity(QSerialPort::NoParity);
         setDataBits(QSerialPort::Data8);
         setStopBits(QSerialPort::OneStop);
@@ -45,6 +44,7 @@ bool Serial::init(QString portName)
         clear();
         //设定触发事件，如果串口有数据，则触发读取函数
         connect(this, SIGNAL(readyRead()), this, SLOT(readBytes()));
+
         return true;
     }
 
@@ -65,14 +65,17 @@ void Serial::writeBytes(const cv::Rect2d& armourBlock, const cv::Mat& resizeFram
 
     //待写入数据缓冲区
     QByteArray buffer;
+
     //向缓冲区添加表示两个短整型数的四个字节
+    buffer.append(reinterpret_cast<char*>(&HEAD), 2);
     buffer.append(reinterpret_cast<char*>(&xDiff), 2);
     buffer.append(reinterpret_cast<char*>(&yDiff), 2);
+    buffer.append(reinterpret_cast<char*>(&TAIL), 2);
 
     //显示被写入的数据
     for(int i = 0; i < buffer.size(); i++)
     {
-        qDebug() << static_cast<int>(buffer[i]) << ' ';
+        qDebug() <<"Diff:"<<static_cast<int>(buffer[i]) << ' ';
     }
     qDebug() << endl;
 

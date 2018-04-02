@@ -65,7 +65,7 @@ Mat ImagePreprocessor::preprocess(const Mat& srcImage)
     dilate(saturation, saturation, kernel_1);
 
     //初始化二值化图
-    Mat framethreshold = Mat(value.size(), CV_8UC1,Scalar(0));
+    Mat  framethreshold = Mat(value.size(), CV_8UC1,Scalar(0));
 
     //根据三个通道绘制二值化图
     if(color == 0)
@@ -108,7 +108,7 @@ void ImagePreprocessor::redThreshProcess(const Mat& srcImage,
     Rect boundRect[contours.size()];
     RotatedRect rotatedRect[contours.size()];
 
-    if(contours.size() != 0 )
+    if(contours.size() != 0)
     {
         for(unsigned int a = 0; a < contours.size(); a++)
         {
@@ -191,7 +191,7 @@ void ImagePreprocessor::redThreshProcess(const Mat& srcImage,
                             }
                             else if(huePixel > 0
                                     && hueContourPixels/contours[a].size()>0.03
-                                    && contoursArea > 20
+                                    && contoursArea > 15
                                     && boundRect[a].height > 1.5*boundRect[a].width)
                             {
                                 for (int i = boundRect[a].y;
@@ -315,7 +315,7 @@ void ImagePreprocessor::blueThreshProcess(const Mat& srcImage,
                             }
                             else if(huePixel > 0
                                     && hueContourPixels/contours[a].size()>0.03
-                                    && contoursArea > 20
+                                    && contoursArea > 15
                                     && boundRect[a].height > 1.5*boundRect[a].width)
                             {
                                 for (int i = boundRect[a].y;

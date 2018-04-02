@@ -76,6 +76,9 @@ public:
     void writeBytes(const cv::Rect2d& armourBlock, const cv::Mat& resizeFrame, const bool& findArmourBlock);
 
 private:
+    short HEAD = 16191; // equal to 00111111 00111111
+    short TAIL = 7967; // equal to 00011111 000011111
+
     void convertCoord(const cv::Rect2d& armourBlock, const cv::Mat& resizeFrame,
                       short& xDiff, short& yDiff);
 

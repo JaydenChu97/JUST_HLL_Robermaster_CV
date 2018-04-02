@@ -97,4 +97,12 @@ void Tool::getTimeCount(const int& id)
         startTimes[id] = getTickCount();
     }
 }
+
+void Tool::drawPoints(Mat resizeFrame, vector<Point>& points)
+{
+    for(unsigned int i = 0; i < points.size(); i++)
+    {
+        circle(resizeFrame, points[i], 3, Scalar(0, 0, 255));
+    }
+}
 }
