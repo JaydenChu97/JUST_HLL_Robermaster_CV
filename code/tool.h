@@ -103,6 +103,11 @@ public:
     */
     static void getTimeCount(const int& id);
 
+    /**
+     * @brief 画图像
+     * @param Points 输入的一组点
+     */
+    static void drawPoints(Mat resizeFrame, vector<Point>& points);
 private:
     /**
     * @brief 滑动控制条回调函数

@@ -27,7 +27,9 @@ bool ArmourDetector::detect(const Mat& srcImage)
 {
     Mat dstImage = preprocess(srcImage);
 
-    clock_t A,B,C,D,a,b,c,d;
+    clock_t A,B,C,D,a,b,c,d, begin, end;
+
+    begin = clock();
 
     a = clock();
     //存储初步找到的团块
@@ -61,8 +63,6 @@ bool ArmourDetector::detect(const Mat& srcImage)
                        lampsNum, armoursNum, average, standard);
     C = clock();
 
-    cout<<"armourNum:"<<armoursNum<<endl;
-
     //查看搜索出的每一个独立的团块
     drawArrayBlocks(drawImage, armourBlocks, lampsNum, armoursNum, Scalar(100, 150, 200));
 
@@ -86,6 +86,8 @@ bool ArmourDetector::detect(const Mat& srcImage)
 //                        (double)(C - c) / CLOCKS_PER_SEC<<"S"<<"\t"<<
 //                        (double)(D - c) / CLOCKS_PER_SEC<<"S"<<"\t"<< endl;
 
+    end = clock();
+    //cout<<"detectTime:"<<(double)(end - begin)/CLOCKS_PER_SEC<<"s"<<"\t"<<endl;
     return true;
 }
 
@@ -266,7 +268,7 @@ void ArmourDetector::extracArmourBlocks(RotatedRect* armourBlocks,
     int initNum = 0;
     RotatedRect initArmourBlock;
     RotatedRect initLightBlocks[2];
-    RotatedRect armourReserve[lampsNum];    
+    RotatedRect armourReserve[lampsNum];
 
     //非空判定，如果为空的话在下面遍历的时候会出现一个bug，i-1溢出成2^32-1，使循环卡死
     if(lampsNum != 0)
@@ -343,14 +345,20 @@ void ArmourDetector::extracArmourBlocks(RotatedRect* armourBlocks,
             }
         }
     }
+    */
+
+    vector<vector<Point> > contours;
+    Mat roi = dstImage(Rect(left, top, width, trebleHeight));
+    findContours(roi, contours, CV_RETR_EXTERNAL, CV_CHAIN_APPROX_NONE);
+    labelValue = contours.size();
 }
-  
+
 void ArmourDetector::domainCountDetect(const RotatedRect* initLightBlocks,
                                        const Mat& dstImage,
                                        int& labelValue,
                                        int lightNum)
 {
-    Mat labelImg = dstImage.clone();       
+    Mat labelImg = dstImage.clone();
 
     int a1 = initLightBlocks[0].boundingRect2f().x,
         a2 = initLightBlocks[0].boundingRect2f().x
@@ -376,11 +384,11 @@ void ArmourDetector::domainCountDetect(const RotatedRect* initLightBlocks,
     int cols = right;
     stack<Point> pointStack; // 堆栈
 
-    //通过压栈计算框定区域内连通域数量    
+    //通过压栈计算框定区域内连通域数量
     //矫正边界
     correctBorder(left, top, width, height, dstImage);
 
-    int trebleHeight = 3*height;
+    int trebleHeight = 2*height;
     if(top + trebleHeight >= dstImage.rows){trebleHeight = dstImage.rows - top;}
     /*
     for (unsigned int i = top; i < rows; i++)
@@ -441,7 +449,13 @@ void ArmourDetector::domainCountDetect(const RotatedRect* initLightBlocks,
     vector<vector<Point> > contours;
     Mat roi = dstImage(Rect(left, top, width, trebleHeight));
     findContours(roi, contours, CV_RETR_EXTERNAL, CV_CHAIN_APPROX_NONE);
-    labelValue = contours.size();
+    for(unsigned int i = 0; i < contours.size(); i++)
+    {
+        float contourAreas = contourArea(contours[i]);
+        if(contourAreas > 0.6*initLightBlocks[0].size.area()
+                && contourAreas < 1.4*initLightBlocks[0].size.area())
+            labelValue = contours.size();
+    }
 }
 
 RotatedRect ArmourDetector::getArmourRotated(RotatedRect* initLightBlocks, int lightsNum)
@@ -485,7 +499,7 @@ void ArmourDetector::calcDeviation(const RotatedRect armourReserve,
     inRangePercent = 0;//区间范围内像素所占比例
     outRangePercent = 0;//区间外像素所占比例
 
-    int left = armourReserve.boundingRect2f().x,        
+    int left = armourReserve.boundingRect2f().x,
         top = armourReserve.boundingRect2f().y,
         width = armourReserve.boundingRect2f().width,
         height = armourReserve.boundingRect2f().height;
@@ -611,7 +625,7 @@ void ArmourDetector::markArmourBlocks(const Mat& srcImage,
             //cutEdgeOfRect(fpoints);
 
             double shortEdge = min(nearRotated[id].size.height, nearRotated[id].size.width);
-            double longEdge = max(nearRotated[id].size.height, nearRotated[id].size.width);
+            double longEdge = max(nearRotated[id].size.height, nearRotated[id].size.width);            
 
             float angle = min(abs(nearRotated[id].angle), 90 - abs(nearRotated[id].angle));
 
@@ -626,11 +640,6 @@ void ArmourDetector::markArmourBlocks(const Mat& srcImage,
     {
         optimalArmourBlocks.push_back(OptimalArmourBlock(armourBlocks[0], abs(average[0])));
     }
-}
-
-void ArmourDetector::correctBorder(int& left, int& top, int& width, int& height, Mat image)
-{
-    int leftClone = left, topClone = top;
 
     if(left < 0){left = 0; width += leftClone;}
     if(left + width > image.cols){width = image.cols - leftClone;}
@@ -723,3 +732,4 @@ void ArmourDetector::cutEdgeOfRect(Point2f* points)
     points[3] = rightPoints[0];
 }
 }
+

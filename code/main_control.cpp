@@ -7,7 +7,7 @@ MainControl::MainControl()
     status = DETECTING;
 
     //初始化串口，如果初始化不成功
-    if(serial.init("COM1"))
+    if(serial.init("COM3"))
     {
         qDebug() << "SerialPort init sucess!" << endl;
     }
@@ -82,6 +82,7 @@ void MainControl::run(const string& path)
 
     //创建原图像显示窗口
     namedWindow(srcFilePath, WINDOW_FULLSCREEN);
+    vector<Point> points;
 
     //添加滑动控制条
     //Tool::addTrackBar(srcFilePath, srcFile);    
@@ -91,16 +92,25 @@ void MainControl::run(const string& path)
     int currentFrame = 0;
     while(true)
     {
+        clock_t begin, finish;
+        begin = clock();
         //添加运行时间统计
-        Tool::getTimeCount(0);
+        Tool::getTimeCount(1);
         //添加滑动控制条跟随视频进度功能(这个功能极其耗时间，最好不要使用)
         //Tool::setTrackBarFollow(srcFilePath, srcFile);
         //添加键盘控制
         Tool::addKeyboardControl(srcFile);
+        finish = clock();
 
+        cout<<"toolTime:"<<(double)(finish - begin)/CLOCKS_PER_SEC<<"s"<<"\t"<<endl;
+
+        begin = clock();
         //读取一帧图像
         srcFile >> frame;
         currentFrame++;
+        finish = clock();
+
+        cout<<"readImgTime:"<<(double)(finish - begin)/CLOCKS_PER_SEC<<"s"<<"\t"<<endl;
 
         //视频播放完毕跳出程序
         if(frame.empty())
@@ -117,6 +127,7 @@ void MainControl::run(const string& path)
         Rect2d armourBlock;
         bool findArmourBlock = false;
 
+        begin = clock();
         //检测图片中的灯柱位置
         if(status == DETECTING && armourDetector.detect(resizeFrame))
         {
@@ -125,6 +136,8 @@ void MainControl::run(const string& path)
             status = TRACKING;
             findArmourBlock = true;
         }
+        finish = clock();
+        cout<<"detectTime:"<<(double)(finish - begin)/CLOCKS_PER_SEC<<"s"<<"\t"<<endl;
 
         // 追踪装甲板区域
         if(status == TRACKING)
@@ -139,6 +152,10 @@ void MainControl::run(const string& path)
                 status = DETECTING;
             }
         }
+
+        points.push_back(Point(armourBlock.x +armourBlock.width/2,
+                               armourBlock.y + armourBlock.height/2));
+        Tool::drawPoints(resizeFrame, points);
 
         //向串口写入相对坐标
         serial.writeBytes(armourBlock, resizeFrame, findArmourBlock);

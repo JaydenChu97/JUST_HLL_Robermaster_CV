@@ -20,41 +20,41 @@ void ArmourTracker::init(const Mat &srcImage, Rect2d armourBlock)
     tracker = TrackerKCF::create(param);
 
     //获取检测结果传递图像的V通道图像
-    initRect = armourBlock;
-    roi = srcImage(Rect(armourBlock.x, armourBlock.y, armourBlock.width, armourBlock.height));
-    Mat initHSV;
-    cvtColor(roi, initHSV, CV_BGR2HSV);
-    Mat hsvImage[3], initValue;
-    split(initHSV, hsvImage);
-    inRange(hsvImage[2], 200, 255, initValue);
-    medianBlur(initValue, initValue, 3);
+//    initRect = armourBlock;
+//    roi = srcImage(Rect(armourBlock.x, armourBlock.y, armourBlock.width, armourBlock.height));
+//    Mat initHSV;
+//    cvtColor(roi, initHSV, CV_BGR2HSV);
+//    Mat hsvImage[3], initValue;
+//    split(initHSV, hsvImage);
+//    inRange(hsvImage[2], 200, 255, initValue);
+//    medianBlur(initValue, initValue, 3);
 
-    //获取每个连通域的外接矩形
-    vector<vector<Point> >contours;
-    findContours(initValue, contours, CV_RETR_EXTERNAL, CV_CHAIN_APPROX_NONE);
-    RotatedRect initLightRect[contours.size()];
-    for(unsigned int i = 0; i < contours.size(); i++)
-        initLightRect[i] = minAreaRect(contours[i]);
+//    //获取每个连通域的外接矩形
+//    vector<vector<Point> >contours;
+//    findContours(initValue, contours, CV_RETR_EXTERNAL, CV_CHAIN_APPROX_NONE);
+//    RotatedRect initLightRect[contours.size()];
+//    for(unsigned int i = 0; i < contours.size(); i++)
+//        initLightRect[i] = minAreaRect(contours[i]);
 
-    //根据检测结果的外接正矩形获取矩形内接装甲板的长度
-    if(contours.size() == 2)
-        gamma = min(abs((initLightRect[0].angle + initLightRect[1].angle)/2),
-                90 - abs((initLightRect[0].angle + initLightRect[1].angle)/2));
-    if(contours.size() > 2)
-    {
-        float initBlockArea = 0;
-        RotatedRect initMaxAreaBlock;
-        for(unsigned int i = 0; i < contours.size(); i++)
-        {
-            if(initLightRect[i].size.area() > initBlockArea)
-            {
-                initBlockArea = initLightRect[i].size.area();
-                initMaxAreaBlock = initLightRect[i];
-            }
-        }
-        gamma = min(abs(initMaxAreaBlock.angle),90 - abs(initMaxAreaBlock.angle));
-    }
-    initArmourLength = max(armourBlock.width, armourBlock.height)*cos(gamma);
+//    //根据检测结果的外接正矩形获取矩形内接装甲板的长度
+//    if(contours.size() == 2)
+//        gamma = min(abs((initLightRect[0].angle + initLightRect[1].angle)/2),
+//                90 - abs((initLightRect[0].angle + initLightRect[1].angle)/2));
+//    if(contours.size() > 2)
+//    {
+//        float initBlockArea = 0;
+//        RotatedRect initMaxAreaBlock;
+//        for(unsigned int i = 0; i < contours.size(); i++)
+//        {
+//            if(initLightRect[i].size.area() > initBlockArea)
+//            {
+//                initBlockArea = initLightRect[i].size.area();
+//                initMaxAreaBlock = initLightRect[i];
+//            }
+//        }
+//        gamma = min(abs(initMaxAreaBlock.angle),90 - abs(initMaxAreaBlock.angle));
+//    }
+//    initArmourLength = max(armourBlock.width, armourBlock.height)*cos(gamma);
 
     tracker->init(srcImage, armourBlock);
 }
@@ -578,13 +578,13 @@ RotatedRect ArmourTracker::armourConfidence(vector<RotatedRect>& armours)
 
             float slantAngle = min(abs(armours[i].angle), 90 - abs(armours[i].angle));
 
-            //计算两轮廓的分数，由旋转矩形倾斜角，两连通域旋转角差组成
+            double similarity = matchShapes(contours[0], contours[1], CV_CONTOURS_MATCH_I1, 0);
 
             float largeArea = max(contourArea(contours[0]), contourArea(contours[1]));
             float smallArea = min(contourArea(contours[0]), contourArea(contours[1]));
 
-            //评分由旋转矩形倾斜角
-            grade = (slantAngle*CV_PI/180 + 0.01)/5 * (abs(angle_0 - angle_1) + 1);
+            //计算两轮廓的分数，由旋转矩形倾斜角，两连通域旋转角差, 轮廓相似度组成
+            grade = (slantAngle*CV_PI/180 + 0.01)/5 * (abs(angle_0 - angle_1) + 1)*similarity/3;
 
             appraiseArmour[num] = armours[i];
             appraiseGrade[num] = grade;
