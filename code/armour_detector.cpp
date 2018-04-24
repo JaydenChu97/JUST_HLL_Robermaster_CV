@@ -28,8 +28,18 @@ bool ArmourDetector::detect(const Mat& srcImage)
     Mat dstImage = preprocess(srcImage);
     Mat value = detectValue;
 
+    clock_t A,B,C,D,a,b,c,d, begin, end;
+
+    begin = clock();
+
+    a = clock();
     //存储初步找到的团块
     vector<vector<Point> > blocks = searchBlocks(dstImage.clone());
+    A = clock();
+
+    //检验数，配合数组，检测数组的实际长度
+    int lampsNum = 0, armoursNum = 0;;
+
 
     //检验数，配合数组，检测数组的实际长度
     int lampsNum = 0, armoursNum = 0;;
@@ -48,6 +58,7 @@ bool ArmourDetector::detect(const Mat& srcImage)
     //查看搜索出的每一个灯柱块
     drawVectorBlocks(drawImage, lampBlocks, Scalar(200, 150, 100));
 
+    c = clock();
     //存储筛选过符合条件的所有对灯柱对最小包围矩形即装甲板区域
     float directAngle[lampsNum];
     RotatedRect armourBlocks[lampsNum];
@@ -389,6 +400,12 @@ void ArmourDetector::extracArmourBlocks(RotatedRect* armourBlocks,
             }
         }
     }
+    */
+
+    vector<vector<Point> > contours;
+    Mat roi = dstImage(Rect(left, top, width, trebleHeight));
+    findContours(roi, contours, CV_RETR_EXTERNAL, CV_CHAIN_APPROX_NONE);
+    labelValue = contours.size();
 }
 
 Point ArmourDetector::calVectorX(const RotatedRect rotated)
@@ -826,8 +843,10 @@ void ArmourDetector::markArmourBlocks(const Mat& srcImage,
         optimalArmourBlocks.push_back(OptimalArmourBlock(armourBlocks[0], 1));
     }
 
-    //将装甲板区域按分从小到大排序，找出最佳区域
-    sort(optimalArmourBlocks.begin(), optimalArmourBlocks.end());
+    if(left < 0){left = 0; width += leftClone;}
+    if(left + width > image.cols){width = image.cols - leftClone;}
+    if(top < 0){top = 0; height += topClone;}
+    if(top + height > image.rows){height = image.rows - topClone;}
 }
 
 void ArmourDetector::correctBorder(int& left, int& top, int& width, int& height, Mat image)

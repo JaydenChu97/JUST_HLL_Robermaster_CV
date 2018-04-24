@@ -133,7 +133,7 @@ void MainControl::run(const string& path)
         {
             armourBlock = armourDetector.getBestArmourBlock();
             armourTracker.init(resizeFrame, armourBlock);
-            //status = TRACKING;
+            status = TRACKING;
             findArmourBlock = true;
         }
         finish = clock();
@@ -152,6 +152,10 @@ void MainControl::run(const string& path)
                 status = DETECTING;
             }
         }
+
+        points.push_back(Point(armourBlock.x +armourBlock.width/2,
+                               armourBlock.y + armourBlock.height/2));
+        Tool::drawPoints(resizeFrame, points);
 
         //向串口写入相对坐标
         serial.writeBytes(armourBlock, resizeFrame, findArmourBlock);

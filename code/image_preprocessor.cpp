@@ -38,6 +38,8 @@ Mat ImagePreprocessor::preprocess(const Mat& srcImage)
 {
     Mat dstImage;
 
+    clock_t begin, end;
+    begin = clock();
     //将bgr格式(opencv默认将彩色图片存储为bgr格式)图像转变为hsv格式
     cvtColor(srcImage, dstImage, CV_BGR2HSV);
     //分离图像三通道
@@ -68,6 +70,7 @@ Mat ImagePreprocessor::preprocess(const Mat& srcImage)
     //初始化二值化图
     Mat framethreshold = Mat(value.size(), CV_8UC1, Scalar(0));
 
+    begin = clock();
     //根据三个通道绘制二值化图
     if(color == 0)
         redThreshProcess(srcImage, framethreshold, hue, saturation, value, hsvImages[2]);
@@ -80,6 +83,9 @@ Mat ImagePreprocessor::preprocess(const Mat& srcImage)
 //    //水平,竖直方向连接一些连接的团块，防止运动模糊产生重影
 //    Mat kernel_3 = getStructuringElement(MORPH_RECT, Size(4,1));
 //    morphologyEx(framethreshold, framethreshold, MORPH_CLOSE, kernel_3);
+
+    end = clock();
+    //cout<<"imageProcessTime:"<<double(end - begin)/CLOCKS_PER_SEC<<"s"<<"\t"<<endl;
 
     //显示单通道处理后图像
     imshow("hImage", hue);
