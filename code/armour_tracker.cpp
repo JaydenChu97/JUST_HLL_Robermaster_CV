@@ -78,7 +78,7 @@ bool ArmourTracker::track(Mat srcImage)
     //对矩形框进行矫正，获取其最小外接矩形
         minBoundRect = refineRect(updateRoi, srcImage);
 
-    imshow("updateRoi", updateRoi);
+    //imshow("updateRoi", updateRoi);
 
     armourBlock = Rect2d(minBoundRect.x + armourBlock.x - armourBlock.height/4,
                          minBoundRect.y + armourBlock.y - armourBlock.height/2,
@@ -186,9 +186,9 @@ Rect2d ArmourTracker::refineRect(Mat& updateRoi, Mat& srcImage)
 
     //rectangle(adjustRoi, minBoundRect, Scalar(255,255,0));
 
-    imshow("updateValue", updateValue);
-    imshow("adjustValue", adjustValue);
-    imshow("adjustRoi", adjustRoi);
+    //imshow("updateValue", updateValue);
+    //imshow("adjustValue", adjustValue);
+    //imshow("adjustRoi", adjustRoi);
 
     return minBoundRect;
 }

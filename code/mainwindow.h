@@ -41,9 +41,9 @@ private slots:
 
     void on_minHeightWidthRat_valueChanged(double arg1);
 
-    void on_inRangePercent_valueChanged(double arg1);
+    void on_tanAngle_valueChanged(double arg1);
 
-    void on_outRangePercent_valueChanged(double arg1);
+    void on_deviationAngle_valueChanged(double arg1);
 
     void on_armourPixelAvg_valueChanged(double arg1);
 

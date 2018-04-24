@@ -3,13 +3,13 @@
 <!--> 程序运行静态参数设定 </!-->
 <opencv_storage>
     <!--灯柱筛选条件-->
-    <armour_detector>
-        <angleRange> 27 </angleRange>
-        <minArea> 15 </minArea>
+    <armour_detector>        
+        <minArea> 4 </minArea>
         <maxHeightWidthRat> 9 </maxHeightWidthRat>
         <minHeightWidthRat> 0.8 </minHeightWidthRat>
-        <inRangePercent> 0.8 </inRangePercent>
-        <outRangePercent> 10 </outRangePercent>
+        <tanAngle> 0.6 </tanAngle>
+        <angleRange> 10 </angleRange>
+        <deviationAngle> 15 </deviationAngle>
         <armourPixelAvg> 30 </armourPixelAvg>
     </armour_detector>
 
@@ -24,7 +24,7 @@
         <white_balance_red_v> 5400 </white_balance_red_v>
         <backlight> 1 </backlight>
         <gain> 0 </gain>
-        <exposure> -7 </exposure>
+        <exposure> -6 </exposure>
      </camera_parameter>
 
     <!--图像hsv三通道阈值参数-->

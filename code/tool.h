@@ -106,8 +106,25 @@ public:
     /**
      * @brief 画图像
      * @param Points 输入的一组点
+     * @param null
      */
     static void drawPoints(Mat resizeFrame, vector<Point>& points);
+
+    /**
+     * @brief 画坐标系
+     * @param resizeFrame 输入的原始图像
+     * @param null
+     */
+    static void drawCoord(Mat resizeFrame);
+
+    /**
+     * @brief 显示检测的坐标
+     * @param resizeFrame 输入的原始图像
+     * @param coord 输入的坐标
+     * @param org_x 数字显示的横坐标位置
+     * @param org_y 数字显示的纵坐标位置
+     */
+    static void showPoints(Mat resizeFrame, short coord, int org_x, int org_y);
 private:
     /**
     * @brief 滑动控制条回调函数

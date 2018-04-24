@@ -35,6 +35,9 @@
 /*opencv库*/
 #include "opencv2/opencv.hpp"
 
+/*自定义库*/
+#include "tool.h"
+
 namespace HCVC {
 //! @addtogroup control
 //! @{
@@ -73,7 +76,8 @@ public:
     * @return null
     * @note 计算的坐标原点为图像几何中心，建立笛卡尔坐标系
     */
-    void writeBytes(const cv::Rect2d& armourBlock, const cv::Mat& resizeFrame, const bool& findArmourBlock);
+    void writeBytes(const cv::Rect2d& armourBlock, const cv::Mat& resizeFrame,
+                          const bool& findArmourBlock);
 
 private:
     short HEAD = 16191; // equal to 00111111 00111111

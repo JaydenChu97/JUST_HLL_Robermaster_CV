@@ -36,10 +36,8 @@ ImagePreprocessor::ImagePreprocessor()
 
 Mat ImagePreprocessor::preprocess(const Mat& srcImage)
 {
-    Mat dstImage;   
+    Mat dstImage;
 
-    clock_t begin, end;
-    begin = clock();
     //将bgr格式(opencv默认将彩色图片存储为bgr格式)图像转变为hsv格式
     cvtColor(srcImage, dstImage, CV_BGR2HSV);
     //分离图像三通道
@@ -50,12 +48,15 @@ Mat ImagePreprocessor::preprocess(const Mat& srcImage)
     hsvImages[1] = rangeThreshold(hsvImages[1], 1);
     hsvImages[2] = rangeThreshold(hsvImages[2], 2);
 
-    Mat hue, saturation, value;    
+    Mat hue, saturation, value;
 
     //中值滤波，去除S通道噪声点
     medianBlur(hsvImages[0], hue, 3);
     medianBlur(hsvImages[1], saturation,3);
-    medianBlur(hsvImages[2], value, 5);
+    medianBlur(hsvImages[2], value, 1);
+    blur(value, value, Size(3,3));
+
+    detectValue = value;
 
     //闭操作，去除H通道噪声点，以水平方向为主膨胀H,S通道像素
     Mat kernel_1 = getStructuringElement(MORPH_RECT, Size(4,1));
@@ -65,23 +66,20 @@ Mat ImagePreprocessor::preprocess(const Mat& srcImage)
     dilate(saturation, saturation, kernel_1);
 
     //初始化二值化图
-    Mat  framethreshold = Mat(value.size(), CV_8UC1,Scalar(0));
+    Mat framethreshold = Mat(value.size(), CV_8UC1, Scalar(0));
 
     //根据三个通道绘制二值化图
     if(color == 0)
-        redThreshProcess(srcImage, framethreshold, hue, saturation, value);
+        redThreshProcess(srcImage, framethreshold, hue, saturation, value, hsvImages[2]);
     else
-        blueThreshProcess(srcImage, framethreshold, hue, saturation, value);
+        blueThreshProcess(srcImage, framethreshold, hue, saturation, value, hsvImages[2]);
 
     //中值滤波去除噪声点，同时使灯柱边缘润滑
     medianBlur(framethreshold, framethreshold, 3);
 
-    //水平,竖直方向连接一些连接的团块，防止运动模糊产生重影
-    Mat kernel_3 = getStructuringElement(MORPH_RECT, Size(4,1));
-    morphologyEx(framethreshold, framethreshold, MORPH_CLOSE, kernel_3);
-
-    end = clock();
-    //cout<<"imageProcessTime:"<<double(end - begin)/CLOCKS_PER_SEC<<"s"<<"\t"<<endl;
+//    //水平,竖直方向连接一些连接的团块，防止运动模糊产生重影
+//    Mat kernel_3 = getStructuringElement(MORPH_RECT, Size(4,1));
+//    morphologyEx(framethreshold, framethreshold, MORPH_CLOSE, kernel_3);
 
     //显示单通道处理后图像
     imshow("hImage", hue);
@@ -95,10 +93,11 @@ Mat ImagePreprocessor::preprocess(const Mat& srcImage)
 }
 
 void ImagePreprocessor::redThreshProcess(const Mat& srcImage,
-                                      Mat& framethreshold,
-                                      Mat& hue,
-                                      Mat& saturation,
-                                      Mat& value)
+                                         Mat& framethreshold,
+                                         Mat& hue,
+                                         Mat& saturation,
+                                         Mat& value,
+                                         Mat& orgValue)
 {
     //查找轮廓，只检索最外面的轮廓，将所有的连码点转换成点
     vector<vector<Point> > contours;//定义一个返回轮廓的容器
@@ -115,11 +114,13 @@ void ImagePreprocessor::redThreshProcess(const Mat& srcImage,
             rotatedRect[a] = minAreaRect(contours[a]);
             boundRect[a] = rotatedRect[a].boundingRect2f();
 
-            if(boundRect[a].height < 9*boundRect[a].width
-                    && boundRect[a].height > 0.8*boundRect[a].width)
+            int longEdge = max(rotatedRect[a].size.height, rotatedRect[a].size.width);
+            int shortEdge = min(rotatedRect[a].size.height, rotatedRect[a].size.width);
+
+            if(longEdge < 10*shortEdge)
             {
                 if(abs(rotatedRect[a].angle) < 30 || abs(rotatedRect[a].angle) > 60)
-                {                    
+                {
                     //计算团块周边红绿特征
                     float hueContourPixels = 0;
                     unsigned int contoursRedSum = 0;
@@ -144,68 +145,65 @@ void ImagePreprocessor::redThreshProcess(const Mat& srcImage,
                         {
                             unsigned int huePixel = 0;
                             unsigned int saturationPixel = 0;
-                            float left = boundRect[a].x - 6,
-                                  right = boundRect[a].x + boundRect[a].width + 6,
-                                  top = boundRect[a].y,
-                                  bottom = boundRect[a].y + boundRect[a].height;
+                            int left = boundRect[a].x - 4 ,
+                                right = boundRect[a].x + boundRect[a].width + 8,
+                                top = boundRect[a].y - 4,
+                                bottom = boundRect[a].y + boundRect[a].height + 8;
 
                             //检测亮度通道团块在H与S通道周围像素情况，存在所设定阈值像素则判定为灯柱
-                            if(left > 0 && right < framethreshold.cols
-                                    && top > 0 && bottom < framethreshold.rows)
+
+                            if(left < 0) left = 0;
+                            if(right > srcImage.cols) right = srcImage.cols;
+                            if(top < 0) top = 0;
+                            if(bottom > srcImage.rows) bottom = srcImage.rows;
+
+                            for(int i = top; i < bottom; i++)
                             {
-                                for(int i = top; i < bottom; i++)
+                                uchar* hueData = hue.ptr<uchar>(i);
+                                uchar* saturationData = saturation.ptr<uchar>(i);
+                                for(int j = left; j < right; j++)
                                 {
-                                    uchar* hueData = hue.ptr<uchar>(i);
-                                    uchar* saturationData = saturation.ptr<uchar>(i);
-                                    for(int j = left; j < right; j++)
-                                    {
-                                        if(hueData[j] == 255)
-                                            huePixel++;
-                                        if(saturationData[j] == 255)
-                                            saturationPixel++;
-                                    }
+                                    if(hueData[j] == 255)
+                                        huePixel++;
+                                    if(saturationData[j] == 255)
+                                        saturationPixel++;
+                                    if(huePixel == 1 && saturationPixel == 1)
+                                        goto BREAK;
                                 }
                             }
 
+BREAK:
                             //根据亮度图团块进行二值图的绘制
                             if(saturationPixel > 0)
                             {
                                 if(huePixel > 0
-                                   && contoursArea > 15)
+                                   && contoursArea > 4)
                                 {
-                                    for (int i = boundRect[a].y;
-                                         i < boundRect[a].y + boundRect[a].height;
-                                         i++)
+                                    for (int i = top; i < bottom; i++)
                                     {
-                                        uchar* valueData = value.ptr<uchar>(i);
+                                        uchar* valueData = orgValue.ptr<uchar>(i);
                                         uchar* framethresholdData = framethreshold.ptr<uchar>(i);
-                                        for (int j = boundRect[a].x;
-                                             j < boundRect[a].x + boundRect[a].width;
-                                             j++)
+                                        for (int j = left; j < right; j++)
                                         {
-                                                if (valueData[j] == 255)
-                                                    framethresholdData[j] = 255;
+                                            if (valueData[j] > 127)
+                                                framethresholdData[j] = 255;
                                         }
                                     }
                                 }
                             }
                             else if(huePixel > 0
                                     && hueContourPixels/contours[a].size()>0.03
-                                    && contoursArea > 15
-                                    && boundRect[a].height > 1.5*boundRect[a].width)
+                                    && contoursArea > 4
+                                    && longEdge > 1.5*shortEdge)
                             {
-                                for (int i = boundRect[a].y;
-                                     i < boundRect[a].y + boundRect[a].height;
-                                     i++)
+                                for (int i = top; i < bottom; i++)
                                 {
-                                    uchar* valueData = value.ptr<uchar>(i);
+                                    uchar* valueData = orgValue.ptr<uchar>(i);
                                     uchar* framethresholdData = framethreshold.ptr<uchar>(i);
-                                    for (int j = boundRect[a].x;
-                                         j < boundRect[a].x + boundRect[a].width;
-                                         j++)
+                                    for (int j = left; j < right; j++)
                                     {
-                                            if (valueData[j] == 255)
-                                                framethresholdData[j] = 255;
+                                        if (valueData[j] > 127)
+                                            framethresholdData[j] = 255;
                                     }
                                 }
                             }
@@ -221,7 +219,8 @@ void ImagePreprocessor::blueThreshProcess(const Mat& srcImage,
                                           Mat& framethreshold,
                                           Mat& hue,
                                           Mat& saturation,
-                                          Mat& value)
+                                          Mat& value,
+                                          Mat &orgValue)
 {
     //查找轮廓，只检索最外面的轮廓，将所有的连码点转换成点
     vector<vector<Point> > contours;//定义一个返回轮廓的容器
@@ -231,19 +230,20 @@ void ImagePreprocessor::blueThreshProcess(const Mat& srcImage,
     Rect boundRect[contours.size()];
     RotatedRect rotatedRect[contours.size()];
 
-    if(contours.size() != 0 )
+    if(contours.size() != 0)
     {
         for(unsigned int a = 0; a < contours.size(); a++)
         {
             rotatedRect[a] = minAreaRect(contours[a]);
             boundRect[a] = rotatedRect[a].boundingRect2f();
 
-            if(boundRect[a].height < 9*boundRect[a].width
-                    && boundRect[a].height > 0.8*boundRect[a].width)
+            int longEdge = max(rotatedRect[a].size.height, rotatedRect[a].size.width);
+            int shortEdge = min(rotatedRect[a].size.height, rotatedRect[a].size.width);
+
+            if(longEdge < 10*shortEdge)
             {
                 if(abs(rotatedRect[a].angle) < 30 || abs(rotatedRect[a].angle) > 60)
                 {
-
                     //计算团块周边红绿特征
                     float hueContourPixels = 0;
                     unsigned int contoursRedSum = 0;
@@ -268,68 +268,65 @@ void ImagePreprocessor::blueThreshProcess(const Mat& srcImage,
                         {
                             unsigned int huePixel = 0;
                             unsigned int saturationPixel = 0;
-                            float left = boundRect[a].x - 6,
-                                  right = boundRect[a].x + boundRect[a].width + 6,
-                                  top = boundRect[a].y,
-                                  bottom = boundRect[a].y + boundRect[a].height;
+                            int left = boundRect[a].x - 4 ,
+                                right = boundRect[a].x + boundRect[a].width + 8,
+                                top = boundRect[a].y - 4,
+                                bottom = boundRect[a].y + boundRect[a].height + 8;
 
                             //检测亮度通道团块在H与S通道周围像素情况，存在所设定阈值像素则判定为灯柱
-                            if(left > 0 && right < framethreshold.cols
-                                    && top > 0 && bottom < framethreshold.rows)
+
+                            if(left < 0) left = 0;
+                            if(right > srcImage.cols) right = srcImage.cols;
+                            if(top < 0) top = 0;
+                            if(bottom > srcImage.rows) bottom = srcImage.rows;
+
+                            for(int i = top; i < bottom; i++)
                             {
-                                for(int i = top; i < bottom; i++)
+                                uchar* hueData = hue.ptr<uchar>(i);
+                                uchar* saturationData = saturation.ptr<uchar>(i);
+                                for(int j = left; j < right; j++)
                                 {
-                                    uchar* hueData = hue.ptr<uchar>(i);
-                                    uchar* saturationData = saturation.ptr<uchar>(i);
-                                    for(int j = left; j < right; j++)
-                                    {
-                                        if(hueData[j] == 255)
-                                            huePixel++;
-                                        if(saturationData[j] == 255)
-                                            saturationPixel++;
-                                    }
+                                    if(hueData[j] == 255)
+                                        huePixel++;
+                                    if(saturationData[j] == 255)
+                                        saturationPixel++;
+                                    if(huePixel == 1 && saturationPixel == 1)
+                                        goto BREAK;
                                 }
                             }
 
+BREAK:
                             //根据亮度图团块进行二值图的绘制
                             if(saturationPixel > 0)
                             {
                                 if(huePixel > 0
-                                   && contoursArea > 15)
+                                   && contoursArea > 4)
                                 {
-                                    for (int i = boundRect[a].y;
-                                         i < boundRect[a].y + boundRect[a].height;
-                                         i++)
+                                    for (int i = top; i < bottom; i++)
                                     {
-                                        uchar* valueData = value.ptr<uchar>(i);
+                                        uchar* valueData = orgValue.ptr<uchar>(i);
                                         uchar* framethresholdData = framethreshold.ptr<uchar>(i);
-                                        for (int j = boundRect[a].x;
-                                             j < boundRect[a].x + boundRect[a].width;
-                                             j++)
+                                        for (int j = left; j < right; j++)
                                         {
-                                                if (valueData[j] == 255)
-                                                    framethresholdData[j] = 255;
+                                            if (valueData[j] > 127)
+                                                framethresholdData[j] = 255;
                                         }
                                     }
                                 }
                             }
                             else if(huePixel > 0
                                     && hueContourPixels/contours[a].size()>0.03
-                                    && contoursArea > 15
-                                    && boundRect[a].height > 1.5*boundRect[a].width)
+                                    && contoursArea > 4
+                                    && longEdge > 1.5*shortEdge)
                             {
-                                for (int i = boundRect[a].y;
-                                     i < boundRect[a].y + boundRect[a].height;
-                                     i++)
+                                for (int i = top; i < bottom; i++)
                                 {
-                                    uchar* valueData = value.ptr<uchar>(i);
+                                    uchar* valueData = orgValue.ptr<uchar>(i);
                                     uchar* framethresholdData = framethreshold.ptr<uchar>(i);
-                                    for (int j = boundRect[a].x;
-                                         j < boundRect[a].x + boundRect[a].width;
-                                         j++)
+                                    for (int j = left; j < right; j++)
                                     {
-                                            if (valueData[j] == 255)
-                                                framethresholdData[j] = 255;
+                                        if (valueData[j] > 127)
+                                            framethresholdData[j] = 255;
                                     }
                                 }
                             }
