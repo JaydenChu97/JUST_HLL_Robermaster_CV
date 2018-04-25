@@ -84,9 +84,6 @@ Mat ImagePreprocessor::preprocess(const Mat& srcImage)
 //    Mat kernel_3 = getStructuringElement(MORPH_RECT, Size(4,1));
 //    morphologyEx(framethreshold, framethreshold, MORPH_CLOSE, kernel_3);
 
-    end = clock();
-    //cout<<"imageProcessTime:"<<double(end - begin)/CLOCKS_PER_SEC<<"s"<<"\t"<<endl;
-
     //显示单通道处理后图像
     imshow("hImage", hue);
     imshow("SImage", saturation);

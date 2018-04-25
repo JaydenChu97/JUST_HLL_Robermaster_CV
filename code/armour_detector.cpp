@@ -44,6 +44,9 @@ bool ArmourDetector::detect(const Mat& srcImage)
     //检验数，配合数组，检测数组的实际长度
     int lampsNum = 0, armoursNum = 0;;
 
+    //检验数，配合数组，检测数组的实际长度
+    int lampsNum = 0, armoursNum = 0;;
+
     //存储找到的所有灯柱块
     vector<RotatedRect> lampBlocks = calcBlocksInfo(blocks, lampsNum);
 
@@ -261,11 +264,11 @@ void ArmourDetector::extracArmourBlocks(RotatedRect* armourBlocks,
     int screenNum = 0;
     int pairNum = 0;
     float angle = 0;
-    Point angleI[lampsNum - 1], angleJ[lampsNum - 1];
+    Point angleI[lampsNum], angleJ[lampsNum];
     RotatedRect screenLamps[lampsNum];
     RotatedRect pairLamps[lampsNum][2];
     RotatedRect initLightBlocks[2];
-    RotatedRect initArmourBlock;        
+    RotatedRect initArmourBlock;
 
     int sequence[lampsNum];
     for(unsigned i = 0; i < lampsNum; i++)
@@ -406,6 +409,80 @@ void ArmourDetector::extracArmourBlocks(RotatedRect* armourBlocks,
     Mat roi = dstImage(Rect(left, top, width, trebleHeight));
     findContours(roi, contours, CV_RETR_EXTERNAL, CV_CHAIN_APPROX_NONE);
     labelValue = contours.size();
+}
+
+Point ArmourDetector::calVectorX(const RotatedRect rotated)
+{
+    Point2f corners[4];
+    rotated.points(corners);
+
+    //获取矩形的中心点的y坐标
+    float centery = 0;
+    for(unsigned i = 0; i < 4; i++)
+    {
+        centery += corners[i].y;
+    }
+    centery /= 4;
+
+    //求出左右两组点的中点
+    Point top[2], bottom[2];
+    int numTop = 0, numBottom = 0;
+
+    for(unsigned i = 0; i < 4; i++)
+    {
+        if(corners[i].y < centery)
+        {
+            top[numTop] = corners[i];
+            numTop++;
+        }
+        else
+        {
+            bottom[numBottom] = corners[i];
+            numBottom++;
+        }
+    }
+
+    //求出底边中点为终点点的向量,方向沿x轴正方向
+    Point vec, vecLeft, vecRight;
+
+    if(top[0].x < top[1].x)
+    {
+        if(bottom[0].x < bottom[1].x)
+        {
+            vecLeft.x = (top[0].x + bottom[0].x)/2;
+            vecLeft.y = (top[0].y + bottom[0].y)/2;
+            vecRight.x = (top[1].x + bottom[1].x)/2;
+            vecRight.y = (top[1].y + bottom[1].y)/2;
+        }
+        else
+        {
+            vecLeft.x = (top[0].x + bottom[1].x)/2;
+            vecLeft.y = (top[0].y + bottom[1].y)/2;
+            vecRight.x = (top[1].x + bottom[0].x)/2;
+            vecRight.y = (top[1].y + bottom[0].y)/2;
+        }
+    }
+    else
+    {
+        if(bottom[0].x < bottom[1].x)
+        {
+            vecLeft.x = (top[1].x + bottom[0].x)/2;
+            vecLeft.y = (top[1].y + bottom[0].y)/2;
+            vecRight.x = (top[0].x + bottom[1].x)/2;
+            vecRight.y = (top[0].y + bottom[1].y)/2;
+        }
+        else
+        {
+            vecLeft.x = (top[1].x + bottom[1].x)/2;
+            vecLeft.y = (top[1].y + bottom[1].y)/2;
+            vecRight.x = (top[0].x + bottom[0].x)/2;
+            vecRight.y = (top[0].y + bottom[0].y)/2;
+        }
+    }
+
+    vec = Point(vecRight.x - vecLeft.x, vecRight.y - vecLeft.y);
+
+    return vec;
 }
 
 Point ArmourDetector::calVectorX(const RotatedRect rotated)
