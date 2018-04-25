@@ -375,7 +375,7 @@ void ArmourDetector::extracArmourBlocks(RotatedRect* armourBlocks,
                    && deviationAngleI < params.deviationAngle
                    && deviationAngleJ < params.deviationAngle)
                 {
-                    directAngle[armoursNum] =  directAngle[i] + deviationAngleI + deviationAngleJ;
+                    directAngle[armoursNum] =  directAngle[i];
                     armourBlocks[armoursNum] = initArmourBlock;
 
                     cout<<"deviationAngleI and deviationAngleJ:"<<

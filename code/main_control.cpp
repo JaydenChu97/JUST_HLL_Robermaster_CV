@@ -69,7 +69,7 @@ void MainControl::run(const string& path)
     //读取源文件
     if(path == "camera")
     {
-        readSrcFile(0);
+        readSrcFile(1);
     }
     else
     {
@@ -133,7 +133,7 @@ void MainControl::run(const string& path)
         {
             armourBlock = armourDetector.getBestArmourBlock();
             armourTracker.init(resizeFrame, armourBlock);
-            //status = TRACKING;
+            status = TRACKING;
             findArmourBlock = true;
         }
         finish = clock();
@@ -156,13 +156,13 @@ void MainControl::run(const string& path)
         //在输出图像中画出装甲板中心轨迹
         points.push_back(Point(armourBlock.x +armourBlock.width/2,
                                armourBlock.y + armourBlock.height/2));
-        //Tool::drawPoints(resizeFrame, points);
+        Tool::drawPoints(resizeFrame, points);
 
         //在输出图像中画出坐标系
-        //Tool::drawCoord(resizeFrame);
+        Tool::drawCoord(resizeFrame);
 
         //向串口写入相对坐标
-        //serial.writeBytes(armourBlock, resizeFrame, findArmourBlock);
+        serial.writeBytes(armourBlock, resizeFrame, findArmourBlock);
 
         //显示原图像(重调大小后)
         imshow(srcFilePath, resizeFrame);
