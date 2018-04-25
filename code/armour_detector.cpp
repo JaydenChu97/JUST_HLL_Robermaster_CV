@@ -28,8 +28,21 @@ bool ArmourDetector::detect(const Mat& srcImage)
     Mat dstImage = preprocess(srcImage);
     Mat value = detectValue;
 
+    clock_t A,B,C,D,a,b,c,d, begin, end;
+
+    begin = clock();
+
+    a = clock();
     //存储初步找到的团块
     vector<vector<Point> > blocks = searchBlocks(dstImage.clone());
+    A = clock();
+
+    //检验数，配合数组，检测数组的实际长度
+    int lampsNum = 0, armoursNum = 0;;
+
+
+    //检验数，配合数组，检测数组的实际长度
+    int lampsNum = 0, armoursNum = 0;;
 
     //检验数，配合数组，检测数组的实际长度
     int lampsNum = 0, armoursNum = 0;;
@@ -48,6 +61,7 @@ bool ArmourDetector::detect(const Mat& srcImage)
     //查看搜索出的每一个灯柱块
     drawVectorBlocks(drawImage, lampBlocks, Scalar(200, 150, 100));
 
+    c = clock();
     //存储筛选过符合条件的所有对灯柱对最小包围矩形即装甲板区域
     float directAngle[lampsNum];
     RotatedRect armourBlocks[lampsNum];
@@ -375,7 +389,7 @@ void ArmourDetector::extracArmourBlocks(RotatedRect* armourBlocks,
                    && deviationAngleI < params.deviationAngle
                    && deviationAngleJ < params.deviationAngle)
                 {
-                    directAngle[armoursNum] =  directAngle[i] + deviationAngleI + deviationAngleJ;
+                    directAngle[armoursNum] =  directAngle[i];
                     armourBlocks[armoursNum] = initArmourBlock;
 
                     cout<<"deviationAngleI and deviationAngleJ:"<<
@@ -389,6 +403,86 @@ void ArmourDetector::extracArmourBlocks(RotatedRect* armourBlocks,
             }
         }
     }
+    */
+
+    vector<vector<Point> > contours;
+    Mat roi = dstImage(Rect(left, top, width, trebleHeight));
+    findContours(roi, contours, CV_RETR_EXTERNAL, CV_CHAIN_APPROX_NONE);
+    labelValue = contours.size();
+}
+
+Point ArmourDetector::calVectorX(const RotatedRect rotated)
+{
+    Point2f corners[4];
+    rotated.points(corners);
+
+    //获取矩形的中心点的y坐标
+    float centery = 0;
+    for(unsigned i = 0; i < 4; i++)
+    {
+        centery += corners[i].y;
+    }
+    centery /= 4;
+
+    //求出左右两组点的中点
+    Point top[2], bottom[2];
+    int numTop = 0, numBottom = 0;
+
+    for(unsigned i = 0; i < 4; i++)
+    {
+        if(corners[i].y < centery)
+        {
+            top[numTop] = corners[i];
+            numTop++;
+        }
+        else
+        {
+            bottom[numBottom] = corners[i];
+            numBottom++;
+        }
+    }
+
+    //求出底边中点为终点点的向量,方向沿x轴正方向
+    Point vec, vecLeft, vecRight;
+
+    if(top[0].x < top[1].x)
+    {
+        if(bottom[0].x < bottom[1].x)
+        {
+            vecLeft.x = (top[0].x + bottom[0].x)/2;
+            vecLeft.y = (top[0].y + bottom[0].y)/2;
+            vecRight.x = (top[1].x + bottom[1].x)/2;
+            vecRight.y = (top[1].y + bottom[1].y)/2;
+        }
+        else
+        {
+            vecLeft.x = (top[0].x + bottom[1].x)/2;
+            vecLeft.y = (top[0].y + bottom[1].y)/2;
+            vecRight.x = (top[1].x + bottom[0].x)/2;
+            vecRight.y = (top[1].y + bottom[0].y)/2;
+        }
+    }
+    else
+    {
+        if(bottom[0].x < bottom[1].x)
+        {
+            vecLeft.x = (top[1].x + bottom[0].x)/2;
+            vecLeft.y = (top[1].y + bottom[0].y)/2;
+            vecRight.x = (top[0].x + bottom[1].x)/2;
+            vecRight.y = (top[0].y + bottom[1].y)/2;
+        }
+        else
+        {
+            vecLeft.x = (top[1].x + bottom[1].x)/2;
+            vecLeft.y = (top[1].y + bottom[1].y)/2;
+            vecRight.x = (top[0].x + bottom[0].x)/2;
+            vecRight.y = (top[0].y + bottom[0].y)/2;
+        }
+    }
+
+    vec = Point(vecRight.x - vecLeft.x, vecRight.y - vecLeft.y);
+
+    return vec;
 }
 
 Point ArmourDetector::calVectorX(const RotatedRect rotated)
@@ -826,8 +920,10 @@ void ArmourDetector::markArmourBlocks(const Mat& srcImage,
         optimalArmourBlocks.push_back(OptimalArmourBlock(armourBlocks[0], 1));
     }
 
-    //将装甲板区域按分从小到大排序，找出最佳区域
-    sort(optimalArmourBlocks.begin(), optimalArmourBlocks.end());
+    if(left < 0){left = 0; width += leftClone;}
+    if(left + width > image.cols){width = image.cols - leftClone;}
+    if(top < 0){top = 0; height += topClone;}
+    if(top + height > image.rows){height = image.rows - topClone;}
 }
 
 void ArmourDetector::correctBorder(int& left, int& top, int& width, int& height, Mat image)

@@ -38,6 +38,8 @@ Mat ImagePreprocessor::preprocess(const Mat& srcImage)
 {
     Mat dstImage;
 
+    clock_t begin, end;
+    begin = clock();
     //将bgr格式(opencv默认将彩色图片存储为bgr格式)图像转变为hsv格式
     cvtColor(srcImage, dstImage, CV_BGR2HSV);
     //分离图像三通道
@@ -68,6 +70,7 @@ Mat ImagePreprocessor::preprocess(const Mat& srcImage)
     //初始化二值化图
     Mat framethreshold = Mat(value.size(), CV_8UC1, Scalar(0));
 
+    begin = clock();
     //根据三个通道绘制二值化图
     if(color == 0)
         redThreshProcess(srcImage, framethreshold, hue, saturation, value, hsvImages[2]);
