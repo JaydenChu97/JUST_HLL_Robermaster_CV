@@ -250,11 +250,11 @@ void ArmourDetector::extracArmourBlocks(RotatedRect* armourBlocks,
     int screenNum = 0;
     int pairNum = 0;
     float angle = 0;
-    Point angleI[lampsNum - 1], angleJ[lampsNum - 1];
+    Point angleI[lampsNum], angleJ[lampsNum];
     RotatedRect screenLamps[lampsNum];
     RotatedRect pairLamps[lampsNum][2];
     RotatedRect initLightBlocks[2];
-    RotatedRect initArmourBlock;        
+    RotatedRect initArmourBlock;
 
     int sequence[lampsNum];
     for(unsigned i = 0; i < lampsNum; i++)
@@ -375,7 +375,7 @@ void ArmourDetector::extracArmourBlocks(RotatedRect* armourBlocks,
                    && deviationAngleI < params.deviationAngle
                    && deviationAngleJ < params.deviationAngle)
                 {
-                    directAngle[armoursNum] =  directAngle[i];
+                    directAngle[armoursNum] =  directAngle[i] + deviationAngleI + deviationAngleJ;
                     armourBlocks[armoursNum] = initArmourBlock;
 
                     cout<<"deviationAngleI and deviationAngleJ:"<<
