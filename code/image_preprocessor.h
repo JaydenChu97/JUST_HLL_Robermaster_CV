@@ -81,13 +81,15 @@ public:
      * @param[in] hue hue通道
      * @param[in] saturation saturation通道
      * @param[in] value value通道
+     * @param[in] orgValue 亮度图原始通道
      * @return null
      */
     void redThreshProcess(const Mat& srcImage,
                        Mat& framethreshold,
                        Mat& hue,
                        Mat& saturation,
-                       Mat& value);
+                       Mat& value,
+                       Mat& orgValue);
 
     /**
      * @brief 进行灯条的筛选，以V通道为主要通道，H与S通道为辅助通道构建二值化图
@@ -99,13 +101,15 @@ public:
      * @param[in] hue hue通道
      * @param[in] saturation saturation通道
      * @param[in] value value通道
+     * @param[in] orgValue 亮度图原始通道
      * @return null
      */
     void blueThreshProcess(const Mat& srcImage,
                        Mat& framethreshold,
                        Mat& hue,
                        Mat& saturation,
-                       Mat& value);
+                       Mat& value,
+                       Mat& orgValue);
 
     /**
     * @brief 设置预处理图像阈值
@@ -124,6 +128,8 @@ public:
     */
     int getThreshod(int channel, int minOrMax) const;
 
+    Mat detectValue;
+
 private:
     //! 存储三通道过滤时，rgb的下上限值
     vector<int> thresholds[3];
@@ -138,8 +144,7 @@ private:
     */
     Mat rangeThreshold(const Mat& srcImage, const int& channel);
 
-    bool color; //颜色，0表示红色，1表示蓝色
-
+    bool color; //颜色，0表示红色，1表示蓝色    
 };
 //! @}
 }

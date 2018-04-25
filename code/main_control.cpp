@@ -45,7 +45,7 @@ bool MainControl::readSrcFile(int cameraId)
     srcFilePath = string("cameraId:");
     srcFilePath.push_back('0'+cameraId);
     srcFile.open(cameraId);
-    srcFile.set(CAP_PROP_SETTINGS, -1);    
+    srcFile.set(CAP_PROP_SETTINGS, -1);
     srcFile.set(CAP_PROP_BRIGHTNESS, params.brightness);
     srcFile.set(CAP_PROP_CONTRAST, params.contrast);
     srcFile.set(CAP_PROP_HUE, params.hue);
@@ -159,6 +159,14 @@ void MainControl::run(const string& path)
 
         //向串口写入相对坐标
         serial.writeBytes(armourBlock, resizeFrame, findArmourBlock);
+
+        //在输出图像中画出装甲板中心轨迹
+        points.push_back(Point(armourBlock.x +armourBlock.width/2,
+                               armourBlock.y + armourBlock.height/2));
+        Tool::drawPoints(resizeFrame, points);
+
+        //在输出图像中画出坐标系
+        Tool::drawCoord(resizeFrame);
 
         //显示原图像(重调大小后)
         imshow(srcFilePath, resizeFrame);

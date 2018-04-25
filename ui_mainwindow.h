@@ -77,10 +77,10 @@ public:
     QVBoxLayout *verticalLayout_3;
     QHBoxLayout *horizontalLayout_10;
     QLabel *label_3;
-    QDoubleSpinBox *inRangePercent;
+    QDoubleSpinBox *tanAngle;
     QHBoxLayout *horizontalLayout_11;
     QLabel *label_4;
-    QDoubleSpinBox *outRangePercent;
+    QDoubleSpinBox *deviationAngle;
     QHBoxLayout *horizontalLayout_12;
     QLabel *label_5;
     QDoubleSpinBox *armourPixelAvg;
@@ -359,14 +359,14 @@ public:
 
         horizontalLayout_10->addWidget(label_3);
 
-        inRangePercent = new QDoubleSpinBox(layoutWidget);
-        inRangePercent->setObjectName(QStringLiteral("inRangePercent"));
-        inRangePercent->setMinimum(0.5);
-        inRangePercent->setMaximum(1);
-        inRangePercent->setSingleStep(0.05);
-        inRangePercent->setValue(0.86);
+        tanAngle = new QDoubleSpinBox(layoutWidget);
+        tanAngle->setObjectName(QStringLiteral("tanAngle"));
+        tanAngle->setMinimum(0);
+        tanAngle->setMaximum(1.7);
+        tanAngle->setSingleStep(0.05);
+        tanAngle->setValue(0.6);
 
-        horizontalLayout_10->addWidget(inRangePercent);
+        horizontalLayout_10->addWidget(tanAngle);
 
 
         verticalLayout_3->addLayout(horizontalLayout_10);
@@ -379,13 +379,13 @@ public:
 
         horizontalLayout_11->addWidget(label_4);
 
-        outRangePercent = new QDoubleSpinBox(layoutWidget);
-        outRangePercent->setObjectName(QStringLiteral("outRangePercent"));
-        outRangePercent->setMaximum(0.5);
-        outRangePercent->setSingleStep(0.05);
-        outRangePercent->setValue(0.05);
+        deviationAngle = new QDoubleSpinBox(layoutWidget);
+        deviationAngle->setObjectName(QStringLiteral("deviationAngle"));
+        deviationAngle->setMaximum(30);
+        deviationAngle->setSingleStep(2);
+        deviationAngle->setValue(15);
 
-        horizontalLayout_11->addWidget(outRangePercent);
+        horizontalLayout_11->addWidget(deviationAngle);
 
 
         verticalLayout_3->addLayout(horizontalLayout_11);
@@ -454,8 +454,8 @@ public:
         label_2->setText(QApplication::translate("MainWindow", "\346\234\200\345\260\217\351\235\242\347\247\257\351\231\220\345\210\266", Q_NULLPTR));
         label_8->setText(QApplication::translate("MainWindow", "\346\234\200\345\244\247\351\253\230\345\256\275\346\257\224", Q_NULLPTR));
         label_9->setText(QApplication::translate("MainWindow", "\346\234\200\345\260\217\351\253\230\345\256\275\346\257\224", Q_NULLPTR));
-        label_3->setText(QApplication::translate("MainWindow", "\345\214\272\351\227\264\345\206\205\345\203\217\347\264\240\346\257\224", Q_NULLPTR));
-        label_4->setText(QApplication::translate("MainWindow", "\345\214\272\351\227\264\345\244\226\345\203\217\347\264\240\346\257\224", Q_NULLPTR));
+        label_3->setText(QApplication::translate("MainWindow", "\347\201\257\346\237\261\345\201\217\345\220\221\350\247\222", Q_NULLPTR));
+        label_4->setText(QApplication::translate("MainWindow", "\350\243\205\347\224\262\346\235\277\345\201\217\345\220\221\350\247\222", Q_NULLPTR));
         label_5->setText(QApplication::translate("MainWindow", "\347\224\262\346\235\277\345\203\217\347\264\240\345\235\207\345\200\274", Q_NULLPTR));
         toolBar->setWindowTitle(QApplication::translate("MainWindow", "toolBar", Q_NULLPTR));
     } // retranslateUi

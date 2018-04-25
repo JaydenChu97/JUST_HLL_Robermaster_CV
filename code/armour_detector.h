@@ -99,8 +99,8 @@ public:
         float maxHeightWidthRat;   /*!< 单团块检测，最大高宽比 */
         float minHeightWidthRat;   /*!< 单团块检测，最小高宽比 */
 
-        float inRangePercent;      /*!< 甲板像素检测，区间范围内像素比例 */
-        float outRangePercent;     /*!< 甲板像素检测，区间范围外像素比例 */
+        float tanAngle;            /*!< 灯柱角度夹角设置，最大角度差 */
+        float deviationAngle;     /*!< 甲板像素检测，区间范围外像素比例 */
         float armourPixelAvg;      /*!< 甲板像素检测，甲板像素平均值 */
     }params;
 
@@ -177,23 +177,45 @@ private:
                             const RotatedRect* lampBlocks,
                             const Mat srcImage,
                             const Mat dstImage,
+                            const Mat value,
+                            float* directAngle,
                             int lampsNum,
-                            int& armoursNum,
-                            double* average,
-                            double* standard);
+                            int& armoursNum);
+
+    /**
+     * @brief 计算灯柱的与x轴最小的方向向量
+     * @param rotated 输入的待计算的矩形
+     * @return 与x轴最小的方向向量
+     */
+    Point calVectorX(const RotatedRect rotated);
+
+    /**
+     * @brief 计算灯柱的与y轴最小的方向向量
+     * @param rotated 输入的待计算的矩形
+     * @return 与y轴最小的方向向量
+     */
+    Point calVectorY(const RotatedRect rotated);
 
     /**
      * @brief 连通域数量检测
      * @details 求两灯柱外接矩形，检测矩形内的连通域，若连通域数量为2，
      *          对此两灯柱块确定最小外接矩形并返回该灯柱团块
      * @param[in] initLightBlocks 通过两灯柱初步信息检测所筛选出来的灯柱块
+     * @param[in] screenLamps 筛选出来的不重复的外接矩形
      * @param[in] dstImgage 原二值化图像
+     * @param[in] labelValue 连通域检测的连通域个数
+     * @param[in] screenNum screenLamps的实际长度
+     * @param[in] lampsNum screenlamps数组的长度
      * @param[in] lightNum initLightBlocks数组的长度
      * @return null
      */
     void domainCountDetect(const RotatedRect* initLightBlocks,
+                           const RotatedRect* screenLamps,
                            const Mat& dstImage,
+                           const Mat& value,
                            int& labelValue,
+                           const int screenNum,
+                           int lampsNum,
                            int lightNum);
 
     /**
@@ -211,16 +233,16 @@ private:
      * @param[in] srcImage 原彩色图像
      * @param[in] dstImage 原二值化图像
      * @param[out] armourPixelAvg 像素的平均值
-     * @param[out] inRangePercent 设定区间范围内像素的平均值
-     * @param[out] outRangePercent 设定区间范围外像素的平均值
+     * @param[out] tanAngle 设定区间范围内像素的平均值
+     * @param[out] deviationAngle 设定区间范围外像素的平均值
      * @return null
      */
     void calcDeviation(RotatedRect armourReserve,
                        const Mat& srcImage,
                        const Mat& dstImage,
                        double& armourPixelAvg,
-                       double& inRangePercent,
-                       double& outRangePercent,
+                       double& tanAngle,
+                       double& deviationAngle,
                        double& armourStandard);
 
     /**
@@ -231,8 +253,7 @@ private:
     * @param[in] srcImage 待检测原图像
     * @param[in] dstImage 对原图像进行图像预处理后的图像
     * @param[in] armourBlocks 包围装甲板区域的最小旋转矩形数组
-    * @param[in] average 最终检测出的装甲板的平均值
-    * @param[in] standard 最终检测出的装甲板的标准差
+    * @param[in] directAngle 两灯柱的y方向上的夹角
     * @param[in] lampsNum 初步检测最小外接矩形的实际数量,armourBlocks数组的数量
     * @param[in] armoursNum 装甲板检测后获得的装甲板数量
     * @return null
@@ -240,8 +261,7 @@ private:
     void markArmourBlocks(const Mat& srcImage,
                           const Mat& dstImage,
                           const RotatedRect* armourBlocks,
-                          double* average,
-                          double* standard,
+                          const float* directAngle,
                           int lampsNum,
                           int armoursNum);
 

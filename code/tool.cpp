@@ -105,4 +105,27 @@ void Tool::drawPoints(Mat resizeFrame, vector<Point>& points)
         circle(resizeFrame, points[i], 3, Scalar(0, 0, 255));
     }
 }
+
+void Tool::drawCoord(Mat resizeFrame)
+{
+    line(resizeFrame, Point(0, resizeFrame.rows/2),
+         Point(resizeFrame.cols, resizeFrame.rows/2), Scalar(0, 255, 0));
+    line(resizeFrame, Point(resizeFrame.cols/2, 0),
+         Point(resizeFrame.cols/2, resizeFrame.rows), Scalar(0, 255, 0));
+}
+
+void Tool::showPoints(Mat resizeFrame, short coord, int org_x, int org_y)
+{
+    //短型转整型
+    const string text = to_string(coord);
+
+    //坐标在屏幕上显示位置
+    Point origin(org_x, org_y);
+
+    //坐标字体
+    int font_face = FONT_HERSHEY_COMPLEX;
+
+    //显示坐标
+    putText(resizeFrame, text, origin, font_face, 1, Scalar(0, 255, 255), 2);
+}
 }

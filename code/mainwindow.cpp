@@ -27,8 +27,8 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->minArea->setValue(static_cast<double>(armourDetector.params.minArea));
     ui->maxHeightWidthRat->setValue(static_cast<double>(armourDetector.params.maxHeightWidthRat));
     ui->minHeightWidthRat->setValue(static_cast<double>(armourDetector.params.minHeightWidthRat));
-    ui->inRangePercent->setValue(static_cast<double>(armourDetector.params.inRangePercent));
-    ui->outRangePercent->setValue(static_cast<double>(armourDetector.params.outRangePercent));
+    ui->tanAngle->setValue(static_cast<double>(armourDetector.params.tanAngle));
+    ui->deviationAngle->setValue(static_cast<double>(armourDetector.params.deviationAngle));
     ui->armourPixelAvg->setValue(static_cast<double>(armourDetector.params.armourPixelAvg));
 
 }
@@ -101,14 +101,14 @@ void MainWindow::on_minHeightWidthRat_valueChanged(double arg1)
     armourDetector.params.minHeightWidthRat = static_cast<float>(arg1);
 }
 
-void MainWindow::on_inRangePercent_valueChanged(double arg1)
+void MainWindow::on_tanAngle_valueChanged(double arg1)
 {
-    armourDetector.params.inRangePercent = static_cast<float>(arg1);
+    armourDetector.params.tanAngle = static_cast<float>(arg1);
 }
 
-void MainWindow::on_outRangePercent_valueChanged(double arg1)
+void MainWindow::on_deviationAngle_valueChanged(double arg1)
 {
-    armourDetector.params.outRangePercent = static_cast<float>(arg1);
+    armourDetector.params.deviationAngle = static_cast<float>(arg1);
 }
 
 void MainWindow::on_armourPixelAvg_valueChanged(double arg1)

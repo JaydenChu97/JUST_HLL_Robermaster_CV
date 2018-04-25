@@ -11,6 +11,7 @@ void Serial::convertCoord(const cv::Rect2d& armourBlock,const cv::Mat& resizeFra
 {
     xDiff = static_cast<short>(armourBlock.x + armourBlock.width/2 - resizeFrame.cols/2);
     yDiff = static_cast<short>(resizeFrame.rows/2 - (armourBlock.y + armourBlock.height/2));
+    qDebug()<<"intPoint:"<<xDiff<<"\t"<<yDiff<<endl;    
 }
 
 bool Serial::init(QString portName)
@@ -34,7 +35,7 @@ bool Serial::init(QString portName)
     if(open(QIODevice::ReadWrite))
     {
         qDebug() << "open(QIODevice::ReadWrite)";
-        setBaudRate(QSerialPort::Baud38400);
+        setBaudRate(QSerialPort::Baud57600);
         setParity(QSerialPort::NoParity);
         setDataBits(QSerialPort::Data8);
         setStopBits(QSerialPort::OneStop);
@@ -51,7 +52,8 @@ bool Serial::init(QString portName)
     return false;
 }
 
-void Serial::writeBytes(const cv::Rect2d& armourBlock, const cv::Mat& resizeFrame, const bool& findArmourBlock)
+void Serial::writeBytes(const cv::Rect2d& armourBlock, const cv::Mat& resizeFrame,
+                        const bool& findArmourBlock)
 {
     //如果没有检测到装甲板，则发送特殊字节串b 01111111 01111111 01111111 01111111
     if(findArmourBlock == false)
@@ -62,6 +64,13 @@ void Serial::writeBytes(const cv::Rect2d& armourBlock, const cv::Mat& resizeFram
     short xDiff, yDiff;
 
     convertCoord(armourBlock, resizeFrame, xDiff, yDiff);
+
+    //视频显示适时坐标
+    Tool::showPoints(resizeFrame, xDiff, 50, 50);
+    Tool::showPoints(resizeFrame, yDiff, 170, 50);
+
+    //xDiff = 0;
+    //yDiff = 0;
 
     //待写入数据缓冲区
     QByteArray buffer;
