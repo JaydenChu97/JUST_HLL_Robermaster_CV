@@ -6,14 +6,6 @@ Serial::Serial()
 
 }
 
-void Serial::convertCoord(const cv::Rect2d& armourBlock,const cv::Mat& resizeFrame,
-                          short& xDiff, short& yDiff)
-{
-    xDiff = static_cast<short>(armourBlock.x + armourBlock.width/2 - resizeFrame.cols/2);
-    yDiff = static_cast<short>(resizeFrame.rows/2 - (armourBlock.y + armourBlock.height/2));
-    qDebug()<<"intPoint:"<<xDiff<<"\t"<<yDiff<<endl;    
-}
-
 bool Serial::init(QString portName)
 {
     //串口信息类，用于读取可用串口所有的信息
@@ -63,7 +55,10 @@ void Serial::writeBytes(const cv::Rect2d& armourBlock, const cv::Mat& resizeFram
     }
     short xDiff, yDiff;
 
-    convertCoord(armourBlock, resizeFrame, xDiff, yDiff);
+    //转换坐标，修改坐标原点
+    xDiff = static_cast<short>(armourBlock.x + armourBlock.width/2 - resizeFrame.cols/2);
+    yDiff = static_cast<short>(resizeFrame.rows/2 - (armourBlock.y + armourBlock.height/2));
+    qDebug()<<"intPoint:"<<xDiff<<"\t"<<yDiff<<endl;
 
     //视频显示适时坐标
     Tool::showPoints(resizeFrame, xDiff, 50, 50);

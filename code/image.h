@@ -24,26 +24,18 @@
 *                                                                            *
 *****************************************************************************/
 
-#ifndef IMAGE_PREPROCESSOR_H
-#define IMAGE_PREPROCESSOR_H
-/*qt库*/
-#include <QDebug>
+#ifndef IMAGE_H
+#define IMAGE_H
 
-/*C++标准库*/
-#include <algorithm>
-#include <iostream>
-#include <string>
+/*公共头文件*/
+#include "common.h"
 
-/*opencv库*/
-#include "opencv2/opencv.hpp"
+/*OpenCV追踪算法库*/
 #include "opencv2/video/tracking.hpp"
 #include "tracking.hpp"
 
 /*自定义库*/
 #include "tool.h"
-
-using namespace std;
-using namespace cv;
 
 namespace HCVC
 {
@@ -54,14 +46,28 @@ namespace HCVC
 * @brief 图像预处理模块
 * @details 去除噪声，平衡亮度，阈值处理等
 */
-class ImagePreprocessor
+class Image
 {
 public:
     /**
     * @brief 初始化
     *
     */
-    ImagePreprocessor();
+    Image();
+
+    //! 装甲板颜色枚举量
+    enum Color
+    {
+        RED = 0,   /*!< 红色 */
+        BLUE = 1,  /*!< 蓝色 */
+    };
+
+    /**
+    * @brief 设置图像处理参数
+    * @param[in] color 当前需要识别的装甲板颜色
+    * @return 是否初始化成功
+    */
+    bool init(Color color);
 
     /**
     * @brief 对读取到的图片预处理
@@ -144,9 +150,10 @@ private:
     */
     Mat rangeThreshold(const Mat& srcImage, const int& channel);
 
-    bool color; //颜色，0表示红色，1表示蓝色    
+    //! 颜色(RED, BLUE)
+    Color color;
 };
 //! @}
 }
 
-#endif // IMAGE_PREPROCESSOR_H
+#endif // IMAGE_H

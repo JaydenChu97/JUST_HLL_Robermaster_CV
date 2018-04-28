@@ -27,7 +27,7 @@
 #ifndef ARMOUR_TRACKER_H
 #define ARMOUR_TRACKER_H
 
-#include "image_preprocessor.h"
+#include "image.h"
 
 namespace HCVC {
 //! @addtogroup armour_recognition
@@ -179,9 +179,7 @@ public:
      */
     RotatedRect getArmourRotated(RotatedRect* matchDomains, int matchSize);
 
-    Rect2d getArmourBlock() const;
-
-    void fourierTransform(Mat& src);     
+    Rect2d getArmourBlock() const;  
 
 private:
     //! kcf匹配算法图像追踪器
@@ -189,16 +187,24 @@ private:
 
     //! 检测到的装甲板区域
     Rect2d armourBlock;
-    Rect2d initRect;            //初始矩形框
+    //! 初始矩形框
+    Rect2d initRect;
 
-    Mat roi;                    //检测的装甲板区域
-    Mat updateRoi;              //更新后的检测框
-    Mat adjustRoi;              //调整后检测的装甲板区域
-    Mat updateValue;            //更新后的检测框V通道区域
-    Mat adjustValue;            //调整后检装甲板区域V通道图
+    //! 检测的装甲板区域
+    Mat roi;
+    //! 更新后的检测框
+    Mat updateRoi;
+    //! 调整后检测的装甲板区域
+    Mat adjustRoi;
+    //! 更新后的检测框V通道区域
+    Mat updateValue;
+    //! 调整后检装甲板区域V通道图
+    Mat adjustValue;
 
-    float initArmourLength;     //初始图像装甲板长度
-    float gamma;                //初始灯条最小外接矩形的旋转角
+    //! 初始图像装甲板长度
+    float initArmourLength;
+    //! 初始灯条最小外接矩形的旋转角
+    float gamma;
 };
 //! @}
 }
