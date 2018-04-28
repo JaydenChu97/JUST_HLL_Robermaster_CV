@@ -27,19 +27,19 @@
 #ifndef SERIAL_H
 #define SERIAL_H
 
+/*公共头文件*/
+#include "common.h"
+
 /*Qt库*/
 #include <QtSerialPort/QSerialPort>
 #include <QtSerialPort/QSerialPortInfo>
 #include <QDebug>
 
-/*opencv库*/
-#include "opencv2/opencv.hpp"
-
 /*自定义库*/
 #include "tool.h"
 
 namespace HCVC {
-//! @addtogroup control
+//! @addtogroup device
 //! @{
 
 /**
@@ -82,9 +82,6 @@ public:
 private:
     short HEAD = 16191; // equal to 00111111 00111111
     short TAIL = 7967; // equal to 00011111 000011111
-
-    void convertCoord(const cv::Rect2d& armourBlock, const cv::Mat& resizeFrame,
-                      short& xDiff, short& yDiff);
 
 private slots:
     /**

@@ -15,21 +15,11 @@ int main(int argc, char *argv[])
     MainWindow instance;
     instance.show();
 #else
-    HCVC::MainControl instance;
+    HCVC::Control instance;
 #endif
 
-    try
-    {
-        instance.run("F:\\Robomaster\\视觉素材\\视觉素材\\炮台素材红车旋转-ev-0.MOV");
-    }
-    catch(const string& hint)
-    {
-        cout << hint << endl;
-    }
-    catch(const Exception& exception)
-    {
-        cout << exception.what() << endl;
-    }
+    //F:\\Robomaster\\视觉素材\\视觉素材\\炮台素材红车旋转-ev-0.MOV
+    instance.run();
 
 #ifdef DEBUG
     instance.close();

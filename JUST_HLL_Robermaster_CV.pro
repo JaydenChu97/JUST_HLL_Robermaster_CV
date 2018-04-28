@@ -35,21 +35,26 @@ FORMS += \
 HEADERS += \
     code/armour_detector.h \
     code/armour_tracker.h \
-    code/image_preprocessor.h \
-    code/main_control.h \
     code/mainwindow.h \
     code/tool.h \
-    code/serial.h
+    code/serial.h \
+    code/camera.h \
+    code/video.h \
+    code/common.h \
+    code/image.h \
+    code/control.h
 
 SOURCES += \
     code/armour_detector.cpp \
     code/armour_tracker.cpp \
-    code/image_preprocessor.cpp \
-    code/main_control.cpp \
     code/mainwindow.cpp \
     code/tool.cpp \
     code/main.cpp \
-    code/serial.cpp
+    code/serial.cpp \
+    code/camera.cpp \
+    code/video.cpp \
+    code/image.cpp \
+    code/control.cpp
 
 DISTFILES += \
     statics/params.xml

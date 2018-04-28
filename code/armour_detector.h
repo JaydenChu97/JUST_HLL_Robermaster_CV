@@ -27,10 +27,7 @@
 #ifndef ARMOUR_DETECTOR_H
 #define ARMOUR_DETECTOR_H
 
-/*C++标准库*/
-#include <stack>
-
-#include "image_preprocessor.h"
+#include "image.h"
 
 namespace HCVC {
 //! @addtogroup armour_recognition
@@ -40,7 +37,7 @@ namespace HCVC {
  * @brief 装甲板检测模块
  * @details 在图像预处理之后，检测图像确定装甲板区域，根据一定评价原则选出最佳目标
  */
-class ArmourDetector: public ImagePreprocessor
+class ArmourDetector: public Image
 {
 public:
     /**
@@ -65,31 +62,6 @@ public:
     * @return 包围装甲板区域旋转矩形的矩形
     */
     Rect2d getBestArmourBlock() const;
-
-    /**
-    * @brief 在原图像上画出类型为vector旋转矩形，便于调试
-    * @param[in] srcImage 待检测原图像
-    * @param[in] minRotatedRects 需要画出的全部旋转矩形
-    * @param[in] color 线条颜色
-    * @return null
-    */
-    void drawVectorBlocks(Mat srcImage,
-                          const vector<RotatedRect>& minRotatedRects,
-                          const Scalar& color) const;
-
-    /**
-     * @brief 在原图上画出类型为array的旋转矩形
-     * @param[in] srcImage 待检测原图像
-     * @param[in] minRotatedRects 类型为数组的最小外接矩形
-     * @param[in] lampsNum minRotatedRects的数组长度
-     * @param[in] armoursNum minRotatedRects的实际数量
-     * @param[in] color 矩形框的颜色
-     */
-    void drawArrayBlocks(Mat srcImage,
-                         const RotatedRect* minRotatedRects,
-                         int lampsNum,
-                         int armoursNum,
-                         const Scalar& color) const;
 
     //! 装甲板判定参数
     struct Params

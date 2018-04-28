@@ -1,20 +1,26 @@
-﻿#include "image_preprocessor.h"
+#include "image.h"
 
 namespace HCVC {
-ImagePreprocessor::ImagePreprocessor()
+Image::Image()
+{
+
+}
+
+bool Image::init(Color color)
 {
     //初始化阈值列表
     FileStorage fs("statics/params.xml", FileStorage::READ);
     if(!fs.isOpened())
     {
         cout << "Open file failed" << endl;
+        return false;
     }
     FileNode red_node = fs["red_image_preprocessor_threshod"];
     FileNode blue_node = fs["blue_image_preprocessor_threshod"];
 
-    color = 0;
+    this->color = color;
 
-    if(color == 0)
+    if(color == RED)
     {
         for(unsigned int i = 0; i < 3; i++)
         {
@@ -32,14 +38,14 @@ ImagePreprocessor::ImagePreprocessor()
             thresholds[i].push_back(int(blue_node[2*i+1]));
         }
     }
+
+    return true;
 }
 
-Mat ImagePreprocessor::preprocess(const Mat& srcImage)
+Mat Image::preprocess(const Mat& srcImage)
 {
     Mat dstImage;
 
-    clock_t begin, end;
-    begin = clock();
     //将bgr格式(opencv默认将彩色图片存储为bgr格式)图像转变为hsv格式
     cvtColor(srcImage, dstImage, CV_BGR2HSV);
     //分离图像三通道
@@ -70,9 +76,8 @@ Mat ImagePreprocessor::preprocess(const Mat& srcImage)
     //初始化二值化图
     Mat framethreshold = Mat(value.size(), CV_8UC1, Scalar(0));
 
-    begin = clock();
     //根据三个通道绘制二值化图
-    if(color == 0)
+    if(color == RED)
         redThreshProcess(srcImage, framethreshold, hue, saturation, value, hsvImages[2]);
     else
         blueThreshProcess(srcImage, framethreshold, hue, saturation, value, hsvImages[2]);
@@ -90,12 +95,14 @@ Mat ImagePreprocessor::preprocess(const Mat& srcImage)
     imshow("VImage", value);
 
     //显示预处理后图像
+#ifdef DEBUG
     imshow("result", framethreshold);
+#endif
 
     return framethreshold;
 }
 
-void ImagePreprocessor::redThreshProcess(const Mat& srcImage,
+void Image::redThreshProcess(const Mat& srcImage,
                                          Mat& framethreshold,
                                          Mat& hue,
                                          Mat& saturation,
@@ -218,7 +225,7 @@ BREAK:
     }
 }
 
-void ImagePreprocessor::blueThreshProcess(const Mat& srcImage,
+void Image::blueThreshProcess(const Mat& srcImage,
                                           Mat& framethreshold,
                                           Mat& hue,
                                           Mat& saturation,
@@ -341,17 +348,17 @@ BREAK:
     }
 }
 
-void ImagePreprocessor::setThreshod(int channel, int minOrMax, int value)
+void Image::setThreshod(int channel, int minOrMax, int value)
 {
     thresholds[channel][minOrMax] = value;
 }
 
-int ImagePreprocessor::getThreshod(int channel, int minOrMax) const
+int Image::getThreshod(int channel, int minOrMax) const
 {
     return thresholds[channel][minOrMax];
 }
 
-Mat ImagePreprocessor::rangeThreshold(const Mat& srcImage, const int& channel)
+Mat Image::rangeThreshold(const Mat& srcImage, const int& channel)
 {
     Mat result;
     threshold(srcImage, result, static_cast<double>(thresholds[channel][0]), 255, THRESH_BINARY);

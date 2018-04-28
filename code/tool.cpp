@@ -9,11 +9,6 @@ void Tool::addTrackBar(const string& windowName, VideoCapture& file)
     createTrackbar("trackBar", windowName, &g_trackBarLocation, static_cast<int>(count), onTrackBarCallback, &file);
 }
 
-void Tool::onTrackBarCallback(int pos, void* file)
-{
-    static_cast<VideoCapture*>(file)->set(CAP_PROP_POS_FRAMES, pos);
-}
-
 void Tool::setTrackBarFollow(const string& windowName, const VideoCapture& file)
 {
     double cur = file.get(CAP_PROP_POS_FRAMES);
@@ -80,21 +75,17 @@ void Tool::addKeyboardControl(VideoCapture& srcFile, const int& delay)
     }
 }
 
-void Tool::getTimeCount(const int& id)
+void Tool::setTimeCount(const int& id, const int& tag, const string& timeCountName)
 {
-    static long long startTimes[100] = {0};
+    static long long startTimes[100][2];
 
-    if(startTimes[id] == 0)
+    startTimes[id][tag] = getTickCount();
+
+    if(tag == END)
     {
-        startTimes[id] = getTickCount();
-    }
-    else
-    {
-        cout << "id - " << id << " Cost time: "
-             << (getTickCount()-startTimes[id]) / getTickFrequency()
+        cout << "id - " << id << " - " << timeCountName << " Cost time: "
+             << (startTimes[id][END]-startTimes[id][BEGIN]) / getTickFrequency()
              << " s" << endl;
-
-        startTimes[id] = getTickCount();
     }
 }
 
@@ -127,5 +118,46 @@ void Tool::showPoints(Mat resizeFrame, short coord, int org_x, int org_y)
 
     //显示坐标
     putText(resizeFrame, text, origin, font_face, 1, Scalar(0, 255, 255), 2);
+}
+
+void Tool::drawVectorBlocks(Mat srcImage,
+                                const vector<RotatedRect>& minRotatedRects,
+                                const Scalar& color)
+{
+    for(unsigned int i = 0; i < minRotatedRects.size(); i++)
+    {
+        Point2f points[4];
+        minRotatedRects[i].points(points);
+
+        for(unsigned int j = 0; j < 4; j++)
+        {
+            line(srcImage, points[j], points[(j+1)%4], color, 2);
+        }
+    }
+
+    imshow("detectBlocks", srcImage);
+}
+
+void Tool::drawArrayBlocks(Mat srcImage,
+                                     const RotatedRect* minRotatedRects,
+                                     int lampsNum,
+                                     int armoursNum,
+                                     const Scalar& color)
+{
+    for(unsigned int i = 0; i < armoursNum; i++)
+    {
+        Point2f points[4];
+        minRotatedRects[i].points(points);
+
+        for(unsigned int j = 0; j < 4; j++)
+        {
+            line(srcImage, points[j], points[(j+1)%4], color, 2);
+        }
+    }
+}
+
+void Tool::onTrackBarCallback(int pos, void* file)
+{
+    static_cast<VideoCapture*>(file)->set(CAP_PROP_POS_FRAMES, pos);
 }
 }

@@ -5,13 +5,13 @@
 #include <QMainWindow>
 
 /*自定义库*/
-#include "main_control.h"
+#include "control.h"
 
 namespace Ui {
 class MainWindow;
 }
 
-class MainWindow : public QMainWindow, public HCVC::MainControl
+class MainWindow : public QMainWindow, public HCVC::Control
 {
     Q_OBJECT
 

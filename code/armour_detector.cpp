@@ -28,21 +28,8 @@ bool ArmourDetector::detect(const Mat& srcImage)
     Mat dstImage = preprocess(srcImage);
     Mat value = detectValue;
 
-    clock_t A,B,C,D,a,b,c,d, begin, end;
-
-    begin = clock();
-
-    a = clock();
     //存储初步找到的团块
     vector<vector<Point> > blocks = searchBlocks(dstImage.clone());
-    A = clock();
-
-    //检验数，配合数组，检测数组的实际长度
-    int lampsNum = 0, armoursNum = 0;;
-
-
-    //检验数，配合数组，检测数组的实际长度
-    int lampsNum = 0, armoursNum = 0;;
 
     //检验数，配合数组，检测数组的实际长度
     int lampsNum = 0, armoursNum = 0;;
@@ -59,9 +46,8 @@ bool ArmourDetector::detect(const Mat& srcImage)
     Mat drawImage = srcImage.clone();
 
     //查看搜索出的每一个灯柱块
-    drawVectorBlocks(drawImage, lampBlocks, Scalar(200, 150, 100));
+    Tool::drawVectorBlocks(drawImage, lampBlocks, Scalar(200, 150, 100));
 
-    c = clock();
     //存储筛选过符合条件的所有对灯柱对最小包围矩形即装甲板区域
     float directAngle[lampsNum];
     RotatedRect armourBlocks[lampsNum];
@@ -69,7 +55,7 @@ bool ArmourDetector::detect(const Mat& srcImage)
                        directAngle, lampsNum, armoursNum);
 
     //查看搜索出的每一个独立的团块
-    drawArrayBlocks(drawImage, armourBlocks, lampsNum, armoursNum, Scalar(100, 150, 200));
+    Tool::drawArrayBlocks(drawImage, armourBlocks, lampsNum, armoursNum, Scalar(100, 150, 200));
 
     if(armoursNum == 0)
     {
@@ -80,7 +66,7 @@ bool ArmourDetector::detect(const Mat& srcImage)
 
     markArmourBlocks(srcImage, dstImage, armourBlocks, directAngle, lampsNum, armoursNum);
 
-    drawVectorBlocks(drawImage,
+    Tool::drawVectorBlocks(drawImage,
                vector<RotatedRect>(1, optimalArmourBlocks.front().block),
                Scalar(180, 200, 220));
 
@@ -90,42 +76,6 @@ bool ArmourDetector::detect(const Mat& srcImage)
 Rect2d ArmourDetector::getBestArmourBlock() const
 {
     return optimalArmourBlocks.front().block.boundingRect();
-}
-
-void ArmourDetector::drawVectorBlocks(Mat srcImage,
-                                const vector<RotatedRect>& minRotatedRects,
-                                const Scalar& color) const
-{
-    for(unsigned int i = 0; i < minRotatedRects.size(); i++)
-    {
-        Point2f points[4];
-        minRotatedRects[i].points(points);
-
-        for(unsigned int j = 0; j < 4; j++)
-        {
-            line(srcImage, points[j], points[(j+1)%4], color, 2);
-        }
-    }
-
-    imshow("detectBlocks", srcImage);
-}
-
-void ArmourDetector::drawArrayBlocks(Mat srcImage,
-                                     const RotatedRect* minRotatedRects,
-                                     int lampsNum,
-                                     int armoursNum,
-                                     const Scalar& color) const
-{
-    for(unsigned int i = 0; i < armoursNum; i++)
-    {
-        Point2f points[4];
-        minRotatedRects[i].points(points);
-
-        for(unsigned int j = 0; j < 4; j++)
-        {
-            line(srcImage, points[j], points[(j+1)%4], color, 2);
-        }
-    }
 }
 
 void ArmourDetector::fillLampBlock(Mat& srcImage,
@@ -369,7 +319,7 @@ void ArmourDetector::extracArmourBlocks(RotatedRect* armourBlocks,
             deviationAngleJ *= 180/CV_PI;
 
             deviationAngleI = min(deviationAngleI, abs(90 - deviationAngleI));
-            deviationAngleJ = min(deviationAngleI, abs(90 - deviationAngleJ));
+            deviationAngleJ = min(deviationAngleJ, abs(90 - deviationAngleJ));
 
             int left = initArmourBlock.boundingRect().x,
                 top = initArmourBlock.boundingRect().y,
@@ -389,7 +339,7 @@ void ArmourDetector::extracArmourBlocks(RotatedRect* armourBlocks,
                    && deviationAngleI < params.deviationAngle
                    && deviationAngleJ < params.deviationAngle)
                 {
-                    directAngle[armoursNum] =  directAngle[i];
+                    directAngle[armoursNum] = directAngle[i] + deviationAngleI + deviationAngleJ;
                     armourBlocks[armoursNum] = initArmourBlock;
 
                     cout<<"deviationAngleI and deviationAngleJ:"<<
@@ -403,86 +353,6 @@ void ArmourDetector::extracArmourBlocks(RotatedRect* armourBlocks,
             }
         }
     }
-    */
-
-    vector<vector<Point> > contours;
-    Mat roi = dstImage(Rect(left, top, width, trebleHeight));
-    findContours(roi, contours, CV_RETR_EXTERNAL, CV_CHAIN_APPROX_NONE);
-    labelValue = contours.size();
-}
-
-Point ArmourDetector::calVectorX(const RotatedRect rotated)
-{
-    Point2f corners[4];
-    rotated.points(corners);
-
-    //获取矩形的中心点的y坐标
-    float centery = 0;
-    for(unsigned i = 0; i < 4; i++)
-    {
-        centery += corners[i].y;
-    }
-    centery /= 4;
-
-    //求出左右两组点的中点
-    Point top[2], bottom[2];
-    int numTop = 0, numBottom = 0;
-
-    for(unsigned i = 0; i < 4; i++)
-    {
-        if(corners[i].y < centery)
-        {
-            top[numTop] = corners[i];
-            numTop++;
-        }
-        else
-        {
-            bottom[numBottom] = corners[i];
-            numBottom++;
-        }
-    }
-
-    //求出底边中点为终点点的向量,方向沿x轴正方向
-    Point vec, vecLeft, vecRight;
-
-    if(top[0].x < top[1].x)
-    {
-        if(bottom[0].x < bottom[1].x)
-        {
-            vecLeft.x = (top[0].x + bottom[0].x)/2;
-            vecLeft.y = (top[0].y + bottom[0].y)/2;
-            vecRight.x = (top[1].x + bottom[1].x)/2;
-            vecRight.y = (top[1].y + bottom[1].y)/2;
-        }
-        else
-        {
-            vecLeft.x = (top[0].x + bottom[1].x)/2;
-            vecLeft.y = (top[0].y + bottom[1].y)/2;
-            vecRight.x = (top[1].x + bottom[0].x)/2;
-            vecRight.y = (top[1].y + bottom[0].y)/2;
-        }
-    }
-    else
-    {
-        if(bottom[0].x < bottom[1].x)
-        {
-            vecLeft.x = (top[1].x + bottom[0].x)/2;
-            vecLeft.y = (top[1].y + bottom[0].y)/2;
-            vecRight.x = (top[0].x + bottom[1].x)/2;
-            vecRight.y = (top[0].y + bottom[1].y)/2;
-        }
-        else
-        {
-            vecLeft.x = (top[1].x + bottom[1].x)/2;
-            vecLeft.y = (top[1].y + bottom[1].y)/2;
-            vecRight.x = (top[0].x + bottom[0].x)/2;
-            vecRight.y = (top[0].y + bottom[0].y)/2;
-        }
-    }
-
-    vec = Point(vecRight.x - vecLeft.x, vecRight.y - vecLeft.y);
-
-    return vec;
 }
 
 Point ArmourDetector::calVectorX(const RotatedRect rotated)
@@ -852,33 +722,34 @@ void ArmourDetector::markArmourBlocks(const Mat& srcImage,
         int armourArea[2];
         RotatedRect initArmour[2];
         float angle[2];
+
+        //初始化
         armourArea[0] = armourBlocks[0].size.area();
         initArmour[0] = armourBlocks[0];
-        angle[0] = directAngle[0];
+        angle[0] = directAngle[0];        
+        armourArea[1] = 0;
+
+        //剪去旋转矩形的多余边角，得到装甲板的平行四边形区域
+        //cutEdgeOfRect(fpoints);
 
         for(unsigned int i = 1; i < armoursNum; i++)
-        {
-            //剪去旋转矩形的多余边角，得到装甲板的平行四边形区域
-            //cutEdgeOfRect(fpoints);
-
+        {            
             if(armourBlocks[i].size.area() > armourArea[0])
             {
                 armourArea[0] = armourBlocks[i].size.area();
                 initArmour[0] = armourBlocks[i];
-                angle[0] = directAngle[0];
+                angle[0] = directAngle[i];
             }
         }
 
         for(unsigned int i = 0; i < armoursNum; i++)
         {
-            if(armourBlocks[i].size.area() != armourArea[0])
+            if(armourBlocks[i].size.area() < armourArea[0]
+                    && armourBlocks[i].size.area() > armourArea[1])
             {
-                if(armourArea[0] > 2*armourBlocks[i].size.area())
-                {
-                    armourArea[1] = armourBlocks[i].size.area();
-                    initArmour[1] = armourBlocks[i];
-                    angle[1] = directAngle[i];
-                }
+                armourArea[1] = armourBlocks[i].size.area();
+                initArmour[1] = armourBlocks[i];
+                angle[1] = directAngle[i];
             }
         }
 
@@ -887,11 +758,11 @@ void ArmourDetector::markArmourBlocks(const Mat& srcImage,
             float shortEdge = min(armourBlocks[i].size.height, armourBlocks[i].size.width);
             float longEdge = max(armourBlocks[i].size.height, armourBlocks[i].size.width);
 
-            float angle = min(abs(armourBlocks[i].angle), 90 - abs(armourBlocks[i].angle));
+            //float angle = min(abs(armourBlocks[i].angle), 90 - abs(armourBlocks[i].angle));
 
-            float grade = directAngle[i];
+            float grade = angle[i];
 
-            optimalArmourBlocks.push_back(OptimalArmourBlock(armourBlocks[i], grade));
+            optimalArmourBlocks.push_back(OptimalArmourBlock(initArmour[i], grade));
         }
 
     }
@@ -901,7 +772,7 @@ void ArmourDetector::markArmourBlocks(const Mat& srcImage,
         int armourAreaI = armourBlocks[0].size.area();
         int armourAreaJ = armourBlocks[1].size.area();
 
-        if(armourAreaI > 2*armourAreaJ || armourAreaJ > 2*armourAreaI)
+        if(armourAreaI > 2.5*armourAreaJ || armourAreaJ > 2.5*armourAreaI)
         {
             if(armourAreaI >armourAreaJ)
                 optimalArmourBlocks.push_back(OptimalArmourBlock(armourBlocks[0], armourAreaI));
@@ -910,7 +781,7 @@ void ArmourDetector::markArmourBlocks(const Mat& srcImage,
         }
         else
         {
-            for(unsigned i = 0; i < 2; i++)
+            for(unsigned int i = 0; i < 2; i++)
                optimalArmourBlocks.push_back(OptimalArmourBlock(armourBlocks[i], directAngle[i]));
         }
     }
@@ -920,10 +791,8 @@ void ArmourDetector::markArmourBlocks(const Mat& srcImage,
         optimalArmourBlocks.push_back(OptimalArmourBlock(armourBlocks[0], 1));
     }
 
-    if(left < 0){left = 0; width += leftClone;}
-    if(left + width > image.cols){width = image.cols - leftClone;}
-    if(top < 0){top = 0; height += topClone;}
-    if(top + height > image.rows){height = image.rows - topClone;}
+    //将装甲板区域按分从小到大排序，找出最佳区域
+    sort(optimalArmourBlocks.begin(), optimalArmourBlocks.end());
 }
 
 void ArmourDetector::correctBorder(int& left, int& top, int& width, int& height, Mat image)
