@@ -746,6 +746,12 @@ void ArmourDetector::markArmourBlocks(const Mat& srcImage,
                 angle[1] = directAngle[i];
             }
         }
+        else
+        {
+            for(unsigned int i = 0; i < 2; i++)
+            {
+                double shortEdge = min(initArmour[i].size.height, initArmour[i].size.width);
+                double longEdge = max(initArmour[i].size.height, initArmour[i].size.width);
 
         //获取两个矩形的交集
         Rect overlap = initArmour[0].boundingRect() & initArmour[1].boundingRect();

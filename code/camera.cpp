@@ -41,7 +41,6 @@ bool Camera::init(int cameraId)
     srcFile.set(CAP_PROP_BACKLIGHT, params.backlight);
     srcFile.set(CAP_PROP_GAIN, params.gain);
     srcFile.set(CAP_PROP_EXPOSURE, params.exposure);
-
     return srcFile.isOpened();
 }
 
