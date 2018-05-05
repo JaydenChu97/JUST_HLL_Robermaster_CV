@@ -61,3 +61,4 @@ DISTFILES += \
 
 DEFINES += DEBUG
 
+QMAKE_CXXFLAGS += -Wno-sign-compare
