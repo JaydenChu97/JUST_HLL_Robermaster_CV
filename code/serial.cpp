@@ -99,7 +99,6 @@ void Serial::readBytes()
     {
         receiveFlag = 1;
     }
-
     qDebug() << "********************************" << endl;
     qDebug() << "receive data: " << buffer << endl;
     qDebug() << "********************************" << endl;

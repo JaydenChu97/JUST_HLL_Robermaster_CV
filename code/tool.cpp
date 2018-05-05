@@ -134,7 +134,7 @@ void Tool::drawVectorBlocks(Mat srcImage,
             line(srcImage, points[j], points[(j+1)%4], color, 2);
         }
     }
-#ifdef
+#ifdef DEBUG
     imshow("detectBlocks", srcImage);
 #endif
 }
