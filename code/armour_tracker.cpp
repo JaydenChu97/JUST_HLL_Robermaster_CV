@@ -114,9 +114,9 @@ Rect2d ArmourTracker::refineRect(Mat& updateRoi, Mat& srcImage)
 //            {
 //                if(armourBlock.x < 0 || armourBlock.x + armourBlock.width > srcImage.cols
 //                        ||armourBlock.y < 0 || armourBlock.y + armourBlock.height > srcImage.rows)
-//                   refineOverBorder(minArmourRect, rotatedRect, contours.size());
+//                   refineOverBorder(minArmourRect, rotatedRect);
 //                else
-//                   refineNonOverBorder(minArmourRect, rotatedRect, contours.size());
+//                   refineNonOverBorder(minArmourRect, rotatedRect);
 //            }
 //        }
 
@@ -157,8 +157,7 @@ Rect2d ArmourTracker::refineRect(Mat& updateRoi, Mat& srcImage)
 }
 
 void ArmourTracker::refineOverBorder(RotatedRect& minArmourRect,
-                                     RotatedRect* rotatedRect,
-                                     int rotatedSize)
+                                     RotatedRect* rotatedRect)
 {
     Point2f corners[4];
     vector<Point2f> topCorners;
@@ -229,8 +228,7 @@ void ArmourTracker::refineOverBorder(RotatedRect& minArmourRect,
 }
 
 void ArmourTracker::refineNonOverBorder(RotatedRect& minArmourRect,
-                                        RotatedRect* rotatedRect,
-                                        int rotatedSize)
+                                        RotatedRect* rotatedRect)
 {
     Point2f corners[4];
     vector<Point2f> topCorners;
@@ -344,17 +342,17 @@ void ArmourTracker::searchmatchDomains(RotatedRect& minArmourRect,
     int updateNum;
     int adjustNum;
 
-    updateNum = cloneScreen(updateBlocks, rotatedSize, updateClone, updateBlockNum);
-    adjustNum = cloneScreen(adjustBlocks, contours.size() - 1, adjustClone, exceptNum);
+    updateNum = cloneScreen(updateBlocks, rotatedSize, updateClone);
+    adjustNum = cloneScreen(adjustBlocks, contours.size() - 1, adjustClone);
 
     //对更新后矩形框内连通域数量大于2的进行匹配，寻找最优匹配
     if(updateNum >= 2)
     {
-        armours = updateScreen(updateClone, updateNum, updateBlockNum);
+        armours = updateScreen(updateClone, updateNum);
 
         if(armours.size() == 0)
-            armours = adjustScreen(updateClone, updateBlockNum, updateNum,
-                                     adjustClone, exceptNum, adjustNum);
+            armours = adjustScreen(updateClone, updateNum,
+                                     adjustClone, adjustNum);
         if(armours.size() == 1)
             minArmourRect = armours[0];
         if(armours.size() > 1)
@@ -364,8 +362,8 @@ void ArmourTracker::searchmatchDomains(RotatedRect& minArmourRect,
     //对改性后矩形框内连通域与放大后矩形框内非更新矩形框内连通域矩形匹配
     if(updateNum == 1)
     {
-        armours = adjustScreen(updateClone, updateBlockNum, updateNum,
-                                 adjustClone, exceptNum, adjustNum);
+        armours = adjustScreen(updateClone, updateNum,
+                                 adjustClone, adjustNum);
 
         if(armours.size() == 0)
             boundNum--;
@@ -378,8 +376,7 @@ void ArmourTracker::searchmatchDomains(RotatedRect& minArmourRect,
 
 int ArmourTracker::cloneScreen(RotatedRect* blocks,
                                int blockSize,
-                               RotatedRect* clone,
-                               int cloneBlockNum)
+                               RotatedRect* clone)
 {
     int num = 0;
 
@@ -409,8 +406,7 @@ int ArmourTracker::cloneScreen(RotatedRect* blocks,
 }
 
 vector<RotatedRect> ArmourTracker::updateScreen(RotatedRect* updateClone,
-                                                int updateNum,
-                                                int updateBlockNum)
+                                                int updateNum)
 {
     vector<RotatedRect> armours;
     RotatedRect armourRotated;
@@ -451,10 +447,8 @@ vector<RotatedRect> ArmourTracker::updateScreen(RotatedRect* updateClone,
 }
 
 vector<RotatedRect> ArmourTracker::adjustScreen(RotatedRect* updateClone,
-                                                int updateBlockNum,
                                                 int updateNum,
                                                 RotatedRect* adjustClone,
-                                                int exceptNum,
                                                 int adjustNum)
 {
     vector<RotatedRect> armours;
@@ -543,9 +537,6 @@ RotatedRect ArmourTracker::armourConfidence(vector<RotatedRect>& armours)
 
             double similarity = matchShapes(contours[0], contours[1], CV_CONTOURS_MATCH_I1, 0);
 
-            float largeArea = max(contourArea(contours[0]), contourArea(contours[1]));
-            float smallArea = min(contourArea(contours[0]), contourArea(contours[1]));
-
             //计算两轮廓的分数，由旋转矩形倾斜角，两连通域旋转角差, 轮廓相似度组成
             grade = (slantAngle*CV_PI/180 + 0.01)/5 * (abs(angle_0 - angle_1) + 1)*similarity/3;
 
@@ -555,13 +546,12 @@ RotatedRect ArmourTracker::armourConfidence(vector<RotatedRect>& armours)
         }
     }
 
-    RotatedRect optimalArmour = sortArmour(appraiseArmour, appraiseGrade, armours.size(), num);
+    RotatedRect optimalArmour = sortArmour(appraiseArmour, appraiseGrade, num);
     return optimalArmour;
 }
 
 RotatedRect ArmourTracker::sortArmour(RotatedRect* appraiseArmour,
                                       float* appraiseGrade,
-                                      int arrayNum,
                                       unsigned int num)
 {
     RotatedRect optimalArmour = appraiseArmour[0];

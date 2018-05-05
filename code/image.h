@@ -32,7 +32,7 @@
 
 /*OpenCV追踪算法库*/
 #include "opencv2/video/tracking.hpp"
-#include "tracking.hpp"
+#include "opencv2/tracking.hpp"
 
 /*自定义库*/
 #include "tool.h"

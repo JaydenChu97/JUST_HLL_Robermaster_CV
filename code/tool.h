@@ -143,15 +143,15 @@ public:
      * @brief 在原图上画出类型为array的旋转矩形
      * @param[in] srcImage 待检测原图像
      * @param[in] minRotatedRects 类型为数组的最小外接矩形
-     * @param[in] lampsNum minRotatedRects的数组长度
      * @param[in] armoursNum minRotatedRects的实际数量
      * @param[in] color 矩形框的颜色
      */
     static void drawArrayBlocks(Mat srcImage,
                          const RotatedRect* minRotatedRects,
-                         int lampsNum,
                          int armoursNum,
                          const Scalar& color);
+
+    static string toString(short num);
 
 private:
     /**

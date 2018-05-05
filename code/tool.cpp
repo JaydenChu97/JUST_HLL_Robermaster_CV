@@ -108,7 +108,7 @@ void Tool::drawCoord(Mat resizeFrame)
 void Tool::showPoints(Mat resizeFrame, short coord, int org_x, int org_y)
 {
     //短型转整型
-    const string text = to_string(coord);
+    const string text = toString(coord);
 
     //坐标在屏幕上显示位置
     Point origin(org_x, org_y);
@@ -140,7 +140,6 @@ void Tool::drawVectorBlocks(Mat srcImage,
 
 void Tool::drawArrayBlocks(Mat srcImage,
                            const RotatedRect* minRotatedRects,
-                           int lampsNum,
                            int armoursNum,
                            const Scalar& color)
 {
@@ -160,4 +159,26 @@ void Tool::onTrackBarCallback(int pos, void* file)
 {
     static_cast<VideoCapture*>(file)->set(CAP_PROP_POS_FRAMES, pos);
 }
+
+string Tool::toString(short num)
+{
+    string result = "";
+    char type = '+';
+    if(num < 0)
+    {
+        type = '-';
+        num = -num;
+    }
+
+    while(num)
+    {
+        result.insert(result.begin(), num%10+'0');
+        num/=10;
+    }
+
+    result.insert(result.begin(), type);
+
+    return result;
+}
+
 }

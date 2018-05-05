@@ -147,7 +147,6 @@ private:
     */
     void extracArmourBlocks(RotatedRect* armourBlocks,
                             const RotatedRect* lampBlocks,
-                            const Mat srcImage,
                             const Mat dstImage,
                             const Mat value,
                             float* directAngle,
@@ -177,8 +176,6 @@ private:
      * @param[in] dstImgage 原二值化图像
      * @param[in] labelValue 连通域检测的连通域个数
      * @param[in] screenNum screenLamps的实际长度
-     * @param[in] lampsNum screenlamps数组的长度
-     * @param[in] lightNum initLightBlocks数组的长度
      * @return null
      */
     void domainCountDetect(const RotatedRect* initLightBlocks,
@@ -186,9 +183,7 @@ private:
                            const Mat& dstImage,
                            const Mat& value,
                            int& labelValue,
-                           const int screenNum,
-                           int lampsNum,
-                           int lightNum);
+                           const int screenNum);
 
     /**
      * @brief 获得两团块的最小外接矩形
@@ -226,7 +221,6 @@ private:
     * @param[in] dstImage 对原图像进行图像预处理后的图像
     * @param[in] armourBlocks 包围装甲板区域的最小旋转矩形数组
     * @param[in] directAngle 两灯柱的y方向上的夹角
-    * @param[in] lampsNum 初步检测最小外接矩形的实际数量,armourBlocks数组的数量
     * @param[in] armoursNum 装甲板检测后获得的装甲板数量
     * @return null
     */
@@ -234,13 +228,13 @@ private:
                           const Mat& dstImage,
                           const RotatedRect* armourBlocks,
                           const float* directAngle,
-                          int lampsNum,
                           int armoursNum);
 
     /**
      * @brief 计算装甲板的品均值
      * @param[in] srcImage 输入的原图像
      * @param[in] armour 输入的装甲板区域
+     * @param[in] armour 输入的装甲板
      * @param return null
      */
     double calAverage(const Mat srcImage, const Mat dstImage, RotatedRect armour);
@@ -248,10 +242,10 @@ private:
     /**
      * @brief 绘制两矩形掩膜
      * @param[in] armourBlock 输入矩形
-     * @param[in] lampNum armourBlock数组长度
+     * @param[in] dstImage 输入二值化图像
      * @return 掩膜面积
      */
-    int extractMask(const RotatedRect* armourBlocks, Mat dstImage, int lampNum);
+    int extractMask(const RotatedRect* armourBlocks, Mat dstImage);
 
     /**
      * @brief 对边界进行矫正
@@ -259,6 +253,7 @@ private:
      * @param[out] top 上边界
      * @param[out] width 宽度
      * @param[out] height 高度
+     * @param[in] 最大边界范围图像
      * @return null;
      */
     void correctBorder(int& left, int& top, int& width, int& height, Mat image);

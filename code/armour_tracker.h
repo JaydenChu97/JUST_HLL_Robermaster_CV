@@ -80,19 +80,17 @@ public:
      * @brief 对越界矩形框的进行矫正
      * @param[out] minArmourRect 矫正后的矩形框
      * @param[in] rotatedRect 更新后的矩形内连通域外接矩形
-     * @param[in] rotatedSize rotatedRect数组的长度
      * @return null
      */
-    void refineOverBorder(RotatedRect& minArmourRect, RotatedRect* rotatedRect, int rotatedSize);
+    void refineOverBorder(RotatedRect& minArmourRect, RotatedRect* rotatedRect);
 
     /**
      * @brief 对未越界但只含一个连通域的矩形框进行矫正
      * @param[out] minArmourRect 矫正后的矩形框
      * @param[in] rotatedRect 更新后的矩形内连通域外接矩形
-     * @param[in] rotatedSize rotatedRect数组的长度
      * @return null
      */
-    void refineNonOverBorder(RotatedRect& minArmourRect, RotatedRect* rotatedRect, int rotatedSize);
+    void refineNonOverBorder(RotatedRect& minArmourRect, RotatedRect* rotatedRect);
 
     /**
      * @brief 对更新后矩形框内连通域数量大于2的矩形框进行矫正
@@ -101,6 +99,7 @@ public:
      * @param[out] minAreaRect 矫正后的矩形框
      * @param[in] rotatedRect 更新后的矩形内连通域外接矩形
      * @param[in] rotatedSize rotatedRect数组的长度
+     * @param[in] boundNum flag,用于判断矩形匹配是否为空
      * @return null
      */
     void searchmatchDomains(RotatedRect& minAreaRect,
@@ -113,35 +112,29 @@ public:
      * @param[in] blocks 原区域的团块
      * @param[in] blockSize blocks数组的长度
      * @param[out] clone 筛选后团块数组
-     * @param[in] cloneBlockNum clone数组的长度
      * @return num clone数组的实际储存数量
      */
-    int cloneScreen(RotatedRect* blocks, int blockSize, RotatedRect* clone, int cloneBlockNum);
+    int cloneScreen(RotatedRect* blocks, int blockSize, RotatedRect* clone);
 
     /**
      * @brief 对分类后单独的更新后矩形内完整矩形矩形筛选匹配
      * @param[in] updateClone 通过单个矩形性质筛选出来的更新后矩形框
      * @param[in] updateNum updateClone数组内实际储存的矩形数量
-     * @param[in] updateBlockNum updateClone的数组长度
      * @return 最后筛选出来的包围两连通域的旋转矩形
      */
-    vector<RotatedRect> updateScreen(RotatedRect* updateClone, int updateNum, int updateBlockNum);
+    vector<RotatedRect> updateScreen(RotatedRect* updateClone, int updateNum);
 
     /**
      * @brief 对第一类分类后未成功匹配与第二类分类的矩形进行匹配筛选
      * @param[in] updateClone 通过单个矩形性质筛选出来的更新后矩形框
-     * @param[in] updateBlockNum updateBlockNum的数组长度
      * @param[in] updateNum updateClone数组内实际储存的矩形数量
      * @param[in] adjustClone 通过单个矩形筛选出来的扩大后矩形框
-     * @param[in] exceptNum adjustClone的数组长度
      * @param[in] adjustNum adjustClone数组的长度
      * @return 最后筛选出来的包围两连通域的旋转矩形
      */
     vector<RotatedRect> adjustScreen(RotatedRect* updateClone,
-                                     int updateBlockNum,
                                      int updateNum,
                                      RotatedRect* adjustClone,
-                                     int exceptNum,
                                      int adjustNum);
 
     /**
@@ -155,13 +148,11 @@ public:
      * @brief 选出最优矩阵
      * @param[in] appraiseArmour 经过连通域检测的数组
      * @param[in] appraiseGrade 对应每个旋转矩形的分数
-     * @param[in] arrayNum 数组的长度
      * @param[in] num 数组的实际数量
      * @return 最优矩
      */
     RotatedRect sortArmour(RotatedRect* appraiseArmour,
                            float* appraiseGrade,
-                           int arrayNum,
                            unsigned int num);
 
     /**
