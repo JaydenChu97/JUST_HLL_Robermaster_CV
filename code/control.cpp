@@ -7,17 +7,17 @@ Control::Control()
     status = DETECTING;
 
     //初始化串口，如果初始化不成功
-    if(serial.init("COM3"))
+    if(serial.init("COM6"))
     {
         qDebug() << "SerialPort init sucess!" << endl;
     }
 
-    if(video.init("F:\\Robomaster\\视觉素材\\视觉素材\\炮台素材红车侧面-ev-0.MOV"))
+    if(video.init("F:\\Robomaster\\视觉素材\\视觉素材\\炮台素材红车旋转-ev-0.MOV"))
     {
         qDebug() << "video init sucess!" << endl;
     }
 
-    if(camera.init(1))
+    if(camera.init(0))
     {
         qDebug() << "camera init sucess!" << endl;
     }
@@ -42,7 +42,7 @@ void Control::run()
         waitKey(1);
 
         //读取一帧图像
-        video >> frame;
+        camera >> frame;
 
         //视频播放完毕跳出程序
         if(frame.empty())
@@ -50,7 +50,7 @@ void Control::run()
             break;
         }
 
-        resize(frame, frame, Size(1520, 720));
+        resize(frame, frame, Size(1080, 560));
 
         //检测到的装甲区域
         Rect2d armourBlock;
@@ -61,7 +61,7 @@ void Control::run()
         {
             armourBlock = armourDetector.getBestArmourBlock();
             armourTracker.init(frame, armourBlock);
-            //status = TRACKING;
+            status = TRACKING;
             findArmourBlock = true;
         }
 
@@ -77,12 +77,12 @@ void Control::run()
             {
                 status = DETECTING;
             }
-        }
+        }        
 
         //在输出图像中画出装甲板中心轨迹
         points.push_back(Point(armourBlock.x +armourBlock.width/2,
                                armourBlock.y + armourBlock.height/2));
-        Tool::drawPoints(frame, points);
+        //Tool::drawPoints(frame, points);
 
         //在输出图像中画出坐标系
         Tool::drawCoord(frame);

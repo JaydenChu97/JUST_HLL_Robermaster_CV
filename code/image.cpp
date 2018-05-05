@@ -89,13 +89,13 @@ Mat Image::preprocess(const Mat& srcImage)
 //    Mat kernel_3 = getStructuringElement(MORPH_RECT, Size(4,1));
 //    morphologyEx(framethreshold, framethreshold, MORPH_CLOSE, kernel_3);
 
+#ifdef DEBUG
     //显示单通道处理后图像
     imshow("hImage", hue);
     imshow("SImage", saturation);
     imshow("VImage", value);
 
     //显示预处理后图像
-#ifdef DEBUG
     imshow("result", framethreshold);
 #endif
 

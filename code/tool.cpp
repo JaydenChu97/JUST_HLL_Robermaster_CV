@@ -139,10 +139,10 @@ void Tool::drawVectorBlocks(Mat srcImage,
 }
 
 void Tool::drawArrayBlocks(Mat srcImage,
-                                     const RotatedRect* minRotatedRects,
-                                     int lampsNum,
-                                     int armoursNum,
-                                     const Scalar& color)
+                           const RotatedRect* minRotatedRects,
+                           int lampsNum,
+                           int armoursNum,
+                           const Scalar& color)
 {
     for(unsigned int i = 0; i < armoursNum; i++)
     {

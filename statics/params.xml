@@ -18,13 +18,13 @@
         <brightness> 10 </brightness>
         <contrast> 12 </contrast>
         <hue> 4 </hue>
-        <saturation> 30 </saturation>
+        <saturation> 25 </saturation>
         <pan> 6 </pan>
         <gamma> 96 </gamma>
         <white_balance_red_v> 5400 </white_balance_red_v>
         <backlight> 1 </backlight>
         <gain> 0 </gain>
-        <exposure> -6 </exposure>
+        <exposure> -7 </exposure>
      </camera_parameter>
 
     <!--图像hsv三通道阈值参数-->

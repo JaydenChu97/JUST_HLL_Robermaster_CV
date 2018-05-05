@@ -10,8 +10,6 @@ bool Video::init(string path)
 {
     srcFilePath = path;
     srcFile.open(srcFilePath);
-    srcFile.set(CAP_PROP_FRAME_WIDTH, 800);
-    srcFile.set(CAP_PROP_FRAME_HEIGHT, 600);
 
     return srcFile.isOpened();
 }
