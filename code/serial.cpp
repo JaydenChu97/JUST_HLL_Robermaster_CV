@@ -91,6 +91,8 @@ void Serial::readBytes()
 {
     QByteArray buffer;
     buffer = readAll();
-    qDebug() << buffer << endl;
+    qDebug() << "********************************" << endl;
+    qDebug() << "receive data: " << buffer << endl;
+    qDebug() << "********************************" << endl;
 }
 }

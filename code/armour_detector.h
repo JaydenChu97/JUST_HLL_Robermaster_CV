@@ -238,6 +238,22 @@ private:
                           int armoursNum);
 
     /**
+     * @brief 计算装甲板的品均值
+     * @param[in] srcImage 输入的原图像
+     * @param[in] armour 输入的装甲板区域
+     * @param return null
+     */
+    double calAverage(const Mat srcImage, const Mat dstImage, RotatedRect armour);
+
+    /**
+     * @brief 绘制两矩形掩膜
+     * @param[in] armourBlock 输入矩形
+     * @param[in] lampNum armourBlock数组长度
+     * @return 掩膜面积
+     */
+    int extractMask(const RotatedRect* armourBlocks, Mat dstImage, int lampNum);
+
+    /**
      * @brief 对边界进行矫正
      * @param[out] left 左边界
      * @param[out] top 上边界

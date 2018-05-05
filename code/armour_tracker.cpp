@@ -39,7 +39,7 @@ bool ArmourTracker::track(Mat srcImage)
 
     if(3*armourBlock.area() > roi.cols*roi.rows)
     //对矩形框进行矫正，获取其最小外接矩形
-        minBoundRect = refineRect(updateRoi, srcImage);
+    minBoundRect = refineRect(updateRoi, srcImage);
 
     //imshow("updateRoi", updateRoi);
 

@@ -753,28 +753,46 @@ void ArmourDetector::markArmourBlocks(const Mat& srcImage,
             }
         }
 
-        for(unsigned int i = 0; i < 2; i++)
+        //获取两个矩形的交集
+        Rect overlap = initArmour[0].boundingRect() & initArmour[1].boundingRect();
+
+        if(overlap.empty())
         {
-            float shortEdge = min(armourBlocks[i].size.height, armourBlocks[i].size.width);
-            float longEdge = max(armourBlocks[i].size.height, armourBlocks[i].size.width);
-
-            //float angle = min(abs(armourBlocks[i].angle), 90 - abs(armourBlocks[i].angle));
-
-            float grade = angle[i];
-
-            optimalArmourBlocks.push_back(OptimalArmourBlock(initArmour[i], grade));
+            if(armourArea[0] > armourArea[1])
+                optimalArmourBlocks.push_back(OptimalArmourBlock(initArmour[0], 1));
+            else
+                optimalArmourBlocks.push_back(OptimalArmourBlock(initArmour[1], 1));
         }
+        else
+        {
+            for(unsigned int i = 0; i < 2; i++)
+            {
+                double shortEdge = min(initArmour[i].size.height, initArmour[i].size.width);
+                double longEdge = max(initArmour[i].size.height, initArmour[i].size.width);
 
+                double average = calAverage(srcImage, dstImage, armourBlocks[i]);
+
+                float grade = -average;
+
+                optimalArmourBlocks.push_back(OptimalArmourBlock(initArmour[i], grade));
+            }
+        }
     }
 
     if(armoursNum == 2)
     {
+        //int contoursArea = extractMask(armourBlocks, dstImage, lampsNum);
+
         int armourAreaI = armourBlocks[0].size.area();
         int armourAreaJ = armourBlocks[1].size.area();
 
-        if(armourAreaI > 2.5*armourAreaJ || armourAreaJ > 2.5*armourAreaI)
+        //获取两个矩形的交集
+        Rect overlap = armourBlocks[0].boundingRect() & armourBlocks[1].boundingRect();
+
+        //根据矩形交集判断两矩形是否属于一辆车或是否为噪点匹配
+        if(overlap.empty())
         {
-            if(armourAreaI >armourAreaJ)
+            if(armourAreaI > armourAreaJ)
                 optimalArmourBlocks.push_back(OptimalArmourBlock(armourBlocks[0], armourAreaI));
             else
                 optimalArmourBlocks.push_back(OptimalArmourBlock(armourBlocks[1], armourAreaJ));
@@ -782,7 +800,16 @@ void ArmourDetector::markArmourBlocks(const Mat& srcImage,
         else
         {
             for(unsigned int i = 0; i < 2; i++)
-               optimalArmourBlocks.push_back(OptimalArmourBlock(armourBlocks[i], directAngle[i]));
+            {
+                double shortEdge = min(armourBlocks[i].size.height, armourBlocks[i].size.width);
+                double longEdge = max(armourBlocks[i].size.height, armourBlocks[i].size.width);
+
+                double average = calAverage(srcImage, dstImage, armourBlocks[i]);
+
+                double grade = -average;
+
+                optimalArmourBlocks.push_back(OptimalArmourBlock(armourBlocks[i], grade));
+            }
         }
     }
 
@@ -793,6 +820,98 @@ void ArmourDetector::markArmourBlocks(const Mat& srcImage,
 
     //将装甲板区域按分从小到大排序，找出最佳区域
     sort(optimalArmourBlocks.begin(), optimalArmourBlocks.end());
+}
+
+double ArmourDetector::calAverage(const Mat srcImage, const Mat dstImage, RotatedRect armour)
+{
+    Point2f fpoints[4];
+    armour.points(fpoints);
+
+    //浮点数转换整数
+    Point points[4];
+    for(unsigned int i = 0; i < 4; i++)
+    {
+        points[i] = Point(static_cast<int>(fpoints[i].x), static_cast<int>(fpoints[i].y));
+    }
+
+    const Point* pts = points;
+    const int npts = 4;
+
+    //创建掩码区域为包含装甲板的旋转矩形
+    Mat mask(dstImage.size(), CV_8UC1, Scalar(0));
+    //多边形填充
+    fillConvexPoly(mask, pts, npts, Scalar(255));
+
+    Mat dstNot;
+    //原二值化图取反操作
+    bitwise_not(dstImage, dstNot);
+    //两二值化图取或操作
+    bitwise_and(mask, dstNot, mask);
+
+//    Mat ycrcb;
+//    Mat roi = srcImage(Rect(getBestArmourBlock().tl(), getBestArmourBlock().br()));
+//    cvtColor(roi, ycrcb, COLOR_BGR2YCrCb);
+//    vector<Mat> channels;
+//    split(ycrcb, channels);
+//    equalizeHist(channels[0], channels[0]);
+//    merge(channels, ycrcb);
+//    cvtColor(ycrcb, roi, COLOR_YCrCb2BGR);
+
+    Scalar average, std;
+
+    meanStdDev(srcImage, average, std, mask);
+
+    return average[0];
+}
+
+int ArmourDetector::extractMask(const RotatedRect* armourBlocks, Mat dstImage, int lampNum)
+{
+    Point2f fpoints[4];
+    armourBlocks[0].points(fpoints);
+
+    //浮点数转换整数
+    Point points[4];
+    for(unsigned int i = 0; i < 4; i++)
+    {
+        points[i] = Point(static_cast<int>(fpoints[i].x), static_cast<int>(fpoints[i].y));
+    }
+
+    const Point* ptsI = points;
+    const int npts = 4;
+
+    //创建掩码区域为包含装甲板的旋转矩形
+    Mat maskI(dstImage.size(), CV_8UC1, Scalar(0));
+    //多边形填充
+    fillConvexPoly(maskI, ptsI, npts, Scalar(255));
+
+    armourBlocks[1].points(fpoints);
+
+    for(unsigned int i = 0; i < 4; i++)
+    {
+        points[i] = Point(static_cast<int>(fpoints[i].x), static_cast<int>(fpoints[i].y));
+    }
+
+    const Point* ptsJ = points;
+
+    //创建掩码区域为包含装甲板的旋转矩形
+    Mat maskJ(dstImage.size(), CV_8UC1, Scalar(0));
+    //多边形填充
+    fillConvexPoly(maskJ, ptsJ, npts, Scalar(255));
+
+    Mat mask;
+
+    bitwise_or(maskI, maskJ, mask);
+
+    vector<vector<Point> > contours;
+
+    findContours(mask, contours, CV_RETR_EXTERNAL, CV_CHAIN_APPROX_NONE);
+
+    int contoursArea = 0;
+
+    for(unsigned int i = 0; i < contours.size(); i++)
+        contoursArea += contourArea(contours[i], false);
+
+    return contoursArea;
 }
 
 void ArmourDetector::correctBorder(int& left, int& top, int& width, int& height, Mat image)
