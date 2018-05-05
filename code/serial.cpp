@@ -27,7 +27,7 @@ bool Serial::init(QString portName)
     if(open(QIODevice::ReadWrite))
     {
         qDebug() << "open(QIODevice::ReadWrite)";
-        setBaudRate(QSerialPort::Baud115200);
+        setBaudRate(QSerialPort::Baud57600);
         setParity(QSerialPort::NoParity);
         setDataBits(QSerialPort::Data8);
         setStopBits(QSerialPort::OneStop);

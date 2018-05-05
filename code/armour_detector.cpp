@@ -70,22 +70,6 @@ bool ArmourDetector::detect(const Mat& srcImage)
                vector<RotatedRect>(1, optimalArmourBlocks.front().block),
                Scalar(180, 200, 220));
 
-//    Mat ycrcb;
-//    Mat roi = srcImage(Rect(getBestArmourBlock().tl(), getBestArmourBlock().br()));
-//    cvtColor(roi, ycrcb, COLOR_BGR2YCrCb);
-//    vector<Mat> channels;
-//    split(ycrcb, channels);
-//    equalizeHist(channels[0], channels[0]);
-//    merge(channels, ycrcb);
-//    cvtColor(ycrcb, roi, COLOR_YCrCb2BGR);
-
-//    Mat grad, gray;
-//    cvtColor(roi, gray, COLOR_BGR2GRAY);
-//    blur(gray, gray, Size(1, 1));
-//    Canny(gray, grad, 20, 255);
-//    imshow("grad", grad);
-//    imshow("equalize", roi);
-
     return true;
 }
 
