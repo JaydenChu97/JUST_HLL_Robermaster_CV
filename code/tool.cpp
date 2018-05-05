@@ -83,7 +83,7 @@ void Tool::setTimeCount(const int& id, const int& tag, const string& timeCountNa
 
     if(tag == END)
     {
-        cout << "id - " << id << " - " << timeCountName << " Cost time: "
+        cout << "id - " << id << " - " << "name: " << timeCountName << " Cost time: "
              << (startTimes[id][END]-startTimes[id][BEGIN]) / getTickFrequency()
              << " s" << endl;
     }
@@ -134,8 +134,9 @@ void Tool::drawVectorBlocks(Mat srcImage,
             line(srcImage, points[j], points[(j+1)%4], color, 2);
         }
     }
-
+#ifdef
     imshow("detectBlocks", srcImage);
+#endif
 }
 
 void Tool::drawArrayBlocks(Mat srcImage,

@@ -14,15 +14,23 @@ Control::Control()
 
     if(video.init("F:\\Robomaster\\视觉素材\\视觉素材\\炮台素材红车旋转-ev-0.MOV"))
     {
-        qDebug() << "video init sucess!" << endl;
+        qDebug() << "Video init sucess!" << endl;
     }
 
     if(camera.init(0))
     {
-        qDebug() << "camera init sucess!" << endl;
+        qDebug() << "Camera init sucess!" << endl;
     }
 
-    armourDetector.init(Image::RED);
+    waitKey(30);
+    if(serial.receiveFlag == 0)
+    {
+        armourDetector.init(Image::RED);
+    }
+    else
+    {
+        armourDetector.init(Image::BLUE);
+    }
 }
 
 void Control::run()
@@ -90,8 +98,10 @@ void Control::run()
         //向串口写入相对坐标
         serial.writeBytes(armourBlock, frame, findArmourBlock);
 
+#ifdef DEBUG
         //显示原图像(重调大小后)
         imshow("srcFile", frame);
+#endif
 
         //添加运行时间统计
         Tool::setTimeCount(1, Tool::END, "total time");

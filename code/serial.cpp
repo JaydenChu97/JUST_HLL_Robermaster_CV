@@ -91,6 +91,15 @@ void Serial::readBytes()
 {
     QByteArray buffer;
     buffer = readAll();
+    if(buffer.count('0') >= 5)
+    {
+        receiveFlag = 0;
+    }
+    if(buffer.count('1') >= 5)
+    {
+        receiveFlag = 1;
+    }
+
     qDebug() << "********************************" << endl;
     qDebug() << "receive data: " << buffer << endl;
     qDebug() << "********************************" << endl;

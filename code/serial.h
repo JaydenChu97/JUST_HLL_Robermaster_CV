@@ -79,9 +79,11 @@ public:
     void writeBytes(const cv::Rect2d& armourBlock, const cv::Mat& resizeFrame,
                           const bool& findArmourBlock);
 
+    int receiveFlag = 0; //! 接收标志，如果收到连续0则为0（红色），如果收到连续1则为1（蓝色）
+
 private:
-    short HEAD = 16191; // equal to 00111111 00111111
-    short TAIL = 7967; // equal to 00011111 000011111
+    short HEAD = 16191; //! equal to 00111111 00111111
+    short TAIL = 7967;  //! equal to 00011111 000011111
 
 private slots:
     /**
