@@ -4,7 +4,7 @@
     #include <QApplication>
 #else
     /*主控制库*/
-    #include "main_control.h"
+    #include "control.h"
 #endif
 
 int main(int argc, char *argv[])
@@ -18,7 +18,6 @@ int main(int argc, char *argv[])
     HCVC::Control instance;
 #endif
 
-    //F:\\Robomaster\\视觉素材\\视觉素材\\炮台素材红车旋转-ev-0.MOV
     instance.run();
 
 #ifdef DEBUG

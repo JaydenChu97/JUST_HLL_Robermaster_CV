@@ -45,16 +45,20 @@ bool ArmourDetector::detect(const Mat& srcImage)
     //为中间结果显示准备图像
     Mat drawImage = srcImage.clone();
 
+#ifdef DEBUG
     //查看搜索出的每一个灯柱块
     Tool::drawVectorBlocks(drawImage, lampBlocks, Scalar(200, 150, 100));
+#endif
 
     //存储筛选过符合条件的所有对灯柱对最小包围矩形即装甲板区域
     float directAngle[lampsNum];
     RotatedRect armourBlocks[lampsNum];
     extracArmourBlocks(armourBlocks, lamps, dstImage, value, directAngle, lampsNum, armoursNum);
 
+#ifdef DEBUG
     //查看搜索出的每一个独立的团块
     Tool::drawArrayBlocks(drawImage, armourBlocks, armoursNum, Scalar(100, 150, 200));
+#endif
 
     if(armoursNum == 0)
     {
@@ -65,9 +69,11 @@ bool ArmourDetector::detect(const Mat& srcImage)
 
     markArmourBlocks(srcImage, dstImage, armourBlocks, directAngle, armoursNum);
 
+#ifdef DEBUG
     Tool::drawVectorBlocks(drawImage,
                vector<RotatedRect>(1, optimalArmourBlocks.front().block),
                Scalar(180, 200, 220));
+#endif
 
     return true;
 }

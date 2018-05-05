@@ -47,10 +47,10 @@ bool ArmourTracker::track(Mat srcImage)
 
     correctBorders(armourBlock, srcImage);
 
+#ifdef DEBUG
     //画出追踪的区域
     rectangle(srcImage, armourBlock, Scalar(255, 0, 0), 2, 1);
-
-//    fourierTransform(updateRoi);
+#endif
 
     return true;
 }
