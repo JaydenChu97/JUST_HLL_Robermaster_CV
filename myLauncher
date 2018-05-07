@@ -1,0 +1,21 @@
+#! /bin/sh
+
+/home/nvidia/jetson_clocks.sh
+
+while :
+do
+	echo "Current DIR is " $PWD
+	stillRunning=$(ps -ef | grep "JUST_HLL_Robermaster_CV" | grep -v "grep")
+	if [ "$stillRunning" ]
+	then 
+		echo "JUST_HLL_Robermaster_CV was already started by another way"
+		echo "Kil it and then startup by this shell, otherwise this will loop out this message annoyingly"
+		kill -9 $pidof /home/nvidia/JUST_HLL_Robermaster_CV/JUST_HLL_Robermaster_CV
+	else
+		echo "JUST_HLL_Robermaster_CV was not started"
+		echo "Starting service ..."
+		/home/nvidia/JUST_HLL_Robermaster_CV/JUST_HLL_Robermaster_CV
+		echo "JUST_HLL_Robermaster_CV was started"
+	fi
+	sleep 10
+done
